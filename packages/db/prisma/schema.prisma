@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  profiles  Profile[]
+}
+
+model Profile {
+  id          String      @id @default(cuid())
+  userId      String
+  name        String
+  placeName   String
+  birthDate   DateTime
+  localTime   String
+  latitude    Decimal?    @db.Decimal(10, 7)
+  longitude   Decimal?    @db.Decimal(10, 7)
+  utcOffset   Int?
+  utcDateTime DateTime?
+  julianDay   Decimal?    @db.Decimal(18, 9)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  chart       Chart?
+  user        User        @relation(fields: [userId], references: [id])
+  varshphals  Varshphal[]
+}
+
+model Chart {
+  id           String             @id @default(cuid())
+  profileId    String             @unique
+  planets      Json
+  divisional   Json
+  createdAt    DateTime           @default(now())
+  ashtakavarga AshtakavargaCache?
+  profile      Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  dasha        DashaCache?
+}
+
+model DashaCache {
+  id        String   @id @default(cuid())
+  chartId   String   @unique
+  payload   Json
+  updatedAt DateTime @updatedAt
+  chart     Chart    @relation(fields: [chartId], references: [id], onDelete: Cascade)
+}
+
+model AshtakavargaCache {
+  id        String   @id @default(cuid())
+  chartId   String   @unique
+  payload   Json
+  updatedAt DateTime @updatedAt
+  chart     Chart    @relation(fields: [chartId], references: [id], onDelete: Cascade)
+}
+
+model Varshphal {
+  id        String   @id @default(cuid())
+  profileId String
+  year      Int
+  payload   Json
+  createdAt DateTime @default(now())
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, year])
+}
+
+model ReportJob {
+  id        String    @id @default(cuid())
+  profileId String
+  status    JobStatus
+  reportUrl String?
+  error     String?
+  createdAt DateTime  @default(now())
+}
+
+model LocationCache {
+  id         String   @id @default(cuid())
+  placeName  String   @unique
+  latitude   Decimal  @db.Decimal(10, 7)
+  longitude  Decimal  @db.Decimal(10, 7)
+  timezoneId String
+  updatedAt  DateTime @updatedAt
+}
+
+model Dashboard {
+  id                   String   @id @default(cuid())
+  name                 String
+  notificationsEnabled Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model TimezoneCache {
+  id         String   @id @default(cuid())
+  latitude   Decimal  @db.Decimal(10, 7)
+  longitude  Decimal  @db.Decimal(10, 7)
+  dateKey    String
+  utcOffset  Int
+  timezoneId String
+  updatedAt  DateTime @updatedAt
+
+  @@unique([latitude, longitude, dateKey])
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
