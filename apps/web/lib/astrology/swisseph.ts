@@ -1,18 +1,27 @@
 import koffi from "koffi";
 import path from "path";
+import os from "os";
 
-const dllPath = path.join(
-  process.cwd(),
-  "bin",
-  "swisseph.dll"
-);
+const platform = os.platform();
+const binDir = path.join(process.cwd(), "bin");
+
+let libPath = "";
+if (platform === "win32") {
+  libPath = path.join(binDir, "swisseph.dll");
+} else if (platform === "linux") {
+  libPath = path.join(binDir, "libswe.so");
+} else if (platform === "darwin") {
+  libPath = path.join(binDir, "libswe.dylib");
+} else {
+  throw new Error(`Unsupported platform: ${platform}`);
+}
 
 const ephePath = path.join(
   process.cwd(),
   "bin"
 );
 
-const swe = koffi.load(dllPath);
+const swe = koffi.load(libPath);
 
 export const swe_set_ephe_path = swe.func(
   "void swe_set_ephe_path(const char *path)"

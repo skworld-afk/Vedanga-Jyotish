@@ -1,13 +1,11 @@
 import Link from "next/link";
-import { Footer } from "../components/layout/Footer";
-import { Header } from "../components/layout/Header";
+import { Footer } from "../lib/astrology/Footer";
+import { Header } from "../lib/astrology/Header";
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-[#FDFBF7] text-[#3E2723] font-serif selection:bg-[#DEB887]/30">
-
+    <main className="min-h-screen bg-[#FDFBF7] text-[#3E2723] font-serif selection:bg-[#DEB887]/30 flex flex-col">
       <Header />
-	 
 
       {/* Small space after header */}
       <div className="h-6 md:h-8"></div>
@@ -32,24 +30,24 @@ export default function LandingPage() {
         </p>
 
         {/* Image + Quote */}
-        <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto mb-16 px-4">
+        <div className="w-full max-w-[110px] md:max-w-[130px] lg:max-w-[150px] mx-auto mb-16 px-4 mt-2">
           <div className="relative">
-            <div className="border-[12px] md:border-[16px] border-[#FFFDF8] outline outline-1 outline-[#DEB887] rounded-t-full rounded-b-3xl shadow-2xl overflow-hidden">
+            <div className="border-[6px] md:border-[8px] border-[#FFFDF8] outline outline-1 outline-[#DEB887] rounded-t-full rounded-b-3xl shadow-2xl overflow-hidden">
               <img
-                src="parashara.jpg"
+                src="/parashara.jpg"
                 alt="Maharishi Parashara"
                 className="w-full h-auto object-cover sepia-[0.35] hover:sepia-0 transition-all duration-700"
               />
             </div>
 
-            <blockquote className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-[#FFFDF8] border border-[#DEB887] rounded-2xl shadow-xl p-6 md:p-8 text-center">
+            <blockquote className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[240%] max-w-[320px] bg-[#FFFDF8] border border-[#DEB887] rounded-2xl shadow-xl p-4 md:p-6 text-center z-10">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FDFBF7] px-5 text-[#8B4513] text-3xl">
                 ✧
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#8B4513] leading-relaxed mb-3">
+              <div className="text-xl md:text-2xl font-bold text-[#8B4513] leading-relaxed mb-2">
                 "कर्म-फल-विपाक-काल-विधानम्"
               </div>
-              <div className="text-base md:text-lg italic text-[#5D4037] font-medium">
+              <div className="text-sm md:text-base italic text-[#5D4037] font-medium">
                 The science of understanding the timing of karmic results.
               </div>
             </blockquote>
@@ -158,6 +156,7 @@ export default function LandingPage() {
         </div>
       </div>
 
+      
       <Footer />
     </main>
   );
