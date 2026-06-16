@@ -1,0 +1,40 @@
+Folder PATH listing for volume New Volume
+Volume serial number is E628-22EC
+E:\APP\ASTRO-SAAS\APPS\WEB\APP\DASHBOARD
+¦   actions.ts
+¦   dashboard-settings-form.tsx
+¦   layout.tsx
+¦   page.tsx
+¦   SettingsForm.tsx
+¦   
++---planetary
+¦       page.tsx
+¦       
++---[id]
+    ¦   actions.ts
+    ¦   AdminView.tsx
+    ¦   error.tsx
+    ¦   InteractiveDasha.tsx
+    ¦   layout.tsx
+    ¦   NorthIndianChart.tsx
+    ¦   page.tsx
+    ¦   PrintButton.tsx
+    ¦   SessionTimeout.tsx
+    ¦   SidebarWrapper.tsx
+    ¦   Vimshottari.tsx
+    ¦   
+    +---dasha
+    ¦       page.tsx
+    ¦       
+    +---divisional
+    ¦       page.tsx
+    ¦       
+    +---reports
+    ¦       page.tsx
+    ¦       
+    +---transit
+    ¦       page.tsx
+    ¦       
+    +---yoga
+            page.tsx
+            

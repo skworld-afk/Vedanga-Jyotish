@@ -8,3 +8,11 @@ export function calculateD9Longitude(lon: number): number {
   
   return d9Sign * 30 + remainder * 9;
 }
+
+export function getDivisionalChart(jd: number, varga: string) {
+  // Placeholder for the actual calculation logic
+  return {
+    varga,
+    jd,
+  };
+}

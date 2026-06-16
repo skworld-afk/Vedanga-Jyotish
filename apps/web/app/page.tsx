@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Footer } from "../lib/astrology/Footer";
-import { Header } from "../lib/astrology/Header";
+import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
@@ -33,9 +34,11 @@ export default function LandingPage() {
         <div className="w-full max-w-[110px] md:max-w-[130px] lg:max-w-[150px] mx-auto mb-16 px-4 mt-2">
           <div className="relative">
             <div className="border-[6px] md:border-[8px] border-[#FFFDF8] outline outline-1 outline-[#DEB887] rounded-t-full rounded-b-3xl shadow-2xl overflow-hidden">
-              <img
+              <Image
                 src="/parashara.jpg"
                 alt="Maharishi Parashara"
+                width={150}
+                height={150}
                 className="w-full h-auto object-cover sepia-[0.35] hover:sepia-0 transition-all duration-700"
               />
             </div>
@@ -45,7 +48,7 @@ export default function LandingPage() {
                 ✧
               </div>
               <div className="text-xl md:text-2xl font-bold text-[#8B4513] leading-relaxed mb-2">
-                "कर्म-फल-विपाक-काल-विधानम्"
+                &quot;कर्म-फल-विपाक-काल-विधानम्&quot;
               </div>
               <div className="text-sm md:text-base italic text-[#5D4037] font-medium">
                 The science of understanding the timing of karmic results.

@@ -1,29 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Header } from "../../../components/layout/Header";
 import { Footer } from "../../../components/layout/Footer";
+import { createBirthChart } from "./actions";
 
 export default function CreateChartPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Location Autocomplete State
   const [placeQuery, setPlaceQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Debounced Photon API OpenStreetMap search
+  // Location Search
   useEffect(() => {
     if (placeQuery.length < 3 || !showSuggestions) {
       setSuggestions([]);
       return;
     }
-    const delayDebounceFn = setTimeout(async () => {
+
+    const timeout = setTimeout(async () => {
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(placeQuery)}&osm_tag=place:city&osm_tag=place:town&osm_tag=place:village&limit=5`);
+        const res = await fetch(
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(placeQuery)}&limit=6`
+        );
         const data = await res.json();
         setSuggestions(data.features || []);
       } catch (err) {
@@ -31,13 +32,8 @@ export default function CreateChartPage() {
       }
     }, 300);
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => clearTimeout(timeout);
   }, [placeQuery, showSuggestions]);
-
-  const formatPlace = (feature: any) => {
-    const p = feature.properties;
-    return [p.name, p.state, p.country].filter(Boolean).join(", ");
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,24 +41,14 @@ export default function CreateChartPage() {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
 
     try {
-      const res = await fetch("/api/chart/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await res.json();
-      if (data.success && data.profileId) {
-        router.push(`/dashboard/${data.profileId}`);
-      } else {
-        setError(data.error || "Failed to calculate chart. Please check your inputs.");
-        setIsLoading(false);
+      await createBirthChart(formData);
+    } catch (err: any) {
+      if (err.digest?.startsWith("NEXT_REDIRECT")) {
+        throw err;
       }
-    } catch (err) {
-      setError("A network error occurred. Please try again.");
+      setError(err.message || "Failed to create chart. Please try again.");
       setIsLoading(false);
     }
   };
@@ -70,85 +56,128 @@ export default function CreateChartPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFBF7] font-serif selection:bg-[#DEB887]/30">
       <Header />
-      
+
       <main className="flex-grow py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative overflow-hidden">
-        {/* Background graphic */}
         <div className="absolute inset-0 bg-[radial-gradient(#DEB887_1px,transparent_1px)] [background-size:28px_28px] opacity-10 pointer-events-none" />
-        
+
         <div className="max-w-3xl w-full bg-[#FFFDF8] p-10 sm:p-14 rounded-3xl shadow-xl border border-[#DEB887]/40 relative z-10">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#8B4513] via-[#DEB887] to-[#8B4513]"></div>
-          
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#8B4513] via-[#DEB887] to-[#8B4513]" />
+
           <div className="text-center mb-10">
             <div className="text-[#8B4513] text-4xl mb-4">✨</div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#3E2723] mb-4">Cast Janma Kundali</h2>
-            <p className="text-lg text-[#5D4037]">Provide the native's birth details for precise shastric calculations.</p>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#3E2723] mb-4">
+              Cast Janma Kundali
+            </h2>
+            <p className="text-lg text-[#5D4037]">
+              Provide accurate birth details for precise shastric calculations
+            </p>
           </div>
-          
+
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-800 rounded-lg shadow-sm font-medium">
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-800 rounded-lg">
               {error}
             </div>
           )}
 
-          <form className="space-y-8" onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Full Name */}
               <div className="md:col-span-2">
-                <label htmlFor="name" className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">Full Name</label>
-                <input type="text" name="name" id="name" required className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] placeholder-[#5D4037]/50 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50 focus:border-[#8B4513] transition-all duration-300" placeholder="e.g. Arjuna" />
+                <label className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="displayName"
+                  required
+                  placeholder="e.g. Rahul Sharma"
+                  className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50"
+                />
               </div>
 
+              {/* Gender */}
               <div>
-                <label htmlFor="gender" className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">Gender</label>
-                <select name="gender" id="gender" className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50 focus:border-[#8B4513] transition-all duration-300">
+                <label className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">
+                  Gender
+                </label>
+                <select
+                  name="gender"
+                  defaultValue="MALE"
+                  className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50"
+                >
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
                   <option value="OTHER">Other</option>
                 </select>
               </div>
 
-              <div className="hidden md:block"></div> {/* Empty column for layout */}
-
+              {/* Date of Birth */}
               <div>
-                <label htmlFor="birthDate" className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">Date of Birth</label>
-                <input type="date" name="birthDate" id="birthDate" required className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50 focus:border-[#8B4513] transition-all duration-300" />
+                <label className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="birthDate"
+                  required
+                  className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50"
+                />
               </div>
 
+              {/* Time of Birth */}
               <div>
-                <label htmlFor="birthTime" className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">Time of Birth</label>
-                <input type="time" name="birthTime" id="birthTime" required className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50 focus:border-[#8B4513] transition-all duration-300" />
+                <label className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">
+                  Time of Birth
+                </label>
+                <input
+                  type="time"
+                  step="1"
+                  name="birthTime"
+                  required
+                  className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50"
+                />
               </div>
 
+              {/* Place of Birth */}
               <div className="md:col-span-2">
-                <label htmlFor="placeName" className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">Birth Place</label>
+                <label className="block text-sm font-semibold text-[#5D4037] uppercase tracking-wider mb-2">
+                  Place of Birth
+                </label>
                 <div className="relative">
-                  <input 
-                    type="text" 
-                    name="placeName" 
-                    id="placeName" 
-                    required 
-                    autoComplete="off"
+                  <input
+                    type="text"
+                    name="placeName"
                     value={placeQuery}
                     onChange={(e) => {
                       setPlaceQuery(e.target.value);
                       setShowSuggestions(true);
                     }}
                     onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] placeholder-[#5D4037]/50 focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50 focus:border-[#8B4513] transition-all duration-300" 
-                    placeholder="e.g. Varanasi, Uttar Pradesh, India" 
+                    placeholder="e.g. Varanasi, Uttar Pradesh"
+                    required
+                    className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50"
                   />
+
                   {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border border-[#DEB887]/60 rounded-xl shadow-xl overflow-hidden">
-                      {suggestions.map((f, i) => (
+                    <div className="absolute z-50 w-full mt-2 bg-white border border-[#DEB887]/60 rounded-xl shadow-xl max-h-60 overflow-auto">
+                      {suggestions.map((feature, i) => (
                         <div
                           key={i}
                           onMouseDown={() => {
-                            setPlaceQuery(formatPlace(f));
+                            const place = [
+                              feature.properties.name,
+                              feature.properties.state,
+                              feature.properties.country,
+                            ]
+                              .filter(Boolean)
+                              .join(", ");
+                            setPlaceQuery(place);
                             setShowSuggestions(false);
                           }}
-                          className="px-4 py-3 hover:bg-[#FDFBF7] cursor-pointer text-[#3E2723] transition-colors border-b border-[#DEB887]/20 last:border-0"
+                          className="px-4 py-3 hover:bg-[#FDFBF7] cursor-pointer border-b border-[#DEB887]/20 last:border-0"
                         >
-                          {formatPlace(f)}
+                          {feature.properties.name}, {feature.properties.state},{" "}
+                          {feature.properties.country}
                         </div>
                       ))}
                     </div>
@@ -157,15 +186,17 @@ export default function CreateChartPage() {
               </div>
             </div>
 
-            <div className="pt-6">
-              <button type="submit" disabled={isLoading} className="w-full flex items-center justify-center gap-3 bg-gradient-to-br from-[#8B4513] to-[#5D4037] hover:from-[#5D4037] hover:to-[#3E2723] disabled:opacity-70 disabled:cursor-not-allowed text-white px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all font-bold text-lg tracking-wide hover:-translate-y-0.5">
-                {isLoading ? "Calculating..." : "Calculate Chart ✨"}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full mt-6 py-4 bg-gradient-to-br from-[#8B4513] to-[#5D4037] hover:from-[#5D4037] hover:to-[#3E2723] text-white rounded-xl font-bold text-lg transition-all disabled:opacity-70"
+            >
+              {isLoading ? "Calculating Kundli..." : "Generate Janma Kundali ✨"}
+            </button>
           </form>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

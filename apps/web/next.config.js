@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['koffi'],
-  },
+  output: 'standalone',
+
+  // 1. Turbopack reads this and safely isolates Koffi from the build pipeline
+  serverExternalPackages: ['koffi'],
+
+  // 2. Continues to bundle and trace your local C .so files for production
   outputFileTracingIncludes: {
-    '/**': ['./bin/**/*'],
+    '/api/binding': ['./bin/*.so'], 
   },
 };
 

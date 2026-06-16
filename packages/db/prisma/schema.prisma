@@ -7,37 +7,72 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  createdAt DateTime  @default(now())
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  role      UserRole   @default(USER)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  dashboard Dashboard?
   profiles  Profile[]
 }
 
+model Dashboard {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  name                 String   @default("My Dashboard")
+  notificationsEnabled Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Profile {
-  id          String      @id @default(cuid())
-  userId      String
-  name        String
-  placeName   String
-  birthDate   DateTime
-  localTime   String
-  latitude    Decimal?    @db.Decimal(10, 7)
-  longitude   Decimal?    @db.Decimal(10, 7)
-  utcOffset   Int?
-  utcDateTime DateTime?
-  julianDay   Decimal?    @db.Decimal(18, 9)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  chart       Chart?
-  user        User        @relation(fields: [userId], references: [id])
-  varshphals  Varshphal[]
+  id           String      @id @default(cuid())
+  userId       String
+  birthName    String?
+  displayName  String
+  gender       Gender?
+  placeName    String
+  birthDate    DateTime
+  birthTime    String?
+  latitude     Decimal?    @db.Decimal(10, 7)
+  longitude    Decimal?    @db.Decimal(10, 7)
+  timezoneId   String?
+  timezoneName String?
+  utcOffset    Int?
+  utcDateTime  DateTime?
+  julianDay    Decimal?    @db.Decimal(18, 9)
+  isPrimary    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  chart        Chart?
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports      ReportJob[]
+  varshphals   Varshphal[]
+
+  @@index([userId])
+  @@index([userId, isPrimary])
+  @@index([latitude, longitude])
+  @@index([placeName])
 }
 
 model Chart {
   id           String             @id @default(cuid())
   profileId    String             @unique
+  ayanamsa     String?
   planets      Json
   divisional   Json
   createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  ayanamsaDeg  Decimal?           @db.Decimal(10, 6)
+  bhavaChalit  Json?
+  houses       Json?
+  moonChart    Json?
+  panchang     Json?
+  sunChart     Json?
+  transit      Json?
+  vimshottari  Json?
   ashtakavarga AshtakavargaCache?
   profile      Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
   dasha        DashaCache?
@@ -47,6 +82,7 @@ model DashaCache {
   id        String   @id @default(cuid())
   chartId   String   @unique
   payload   Json
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   chart     Chart    @relation(fields: [chartId], references: [id], onDelete: Cascade)
 }
@@ -55,6 +91,7 @@ model AshtakavargaCache {
   id        String   @id @default(cuid())
   chartId   String   @unique
   payload   Json
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   chart     Chart    @relation(fields: [chartId], references: [id], onDelete: Cascade)
 }
@@ -65,6 +102,7 @@ model Varshphal {
   year      Int
   payload   Json
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, year])
@@ -73,39 +111,52 @@ model Varshphal {
 model ReportJob {
   id        String    @id @default(cuid())
   profileId String
-  status    JobStatus
+  status    JobStatus @default(PENDING)
   reportUrl String?
   error     String?
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, status])
+  @@index([createdAt])
 }
 
 model LocationCache {
-  id         String   @id @default(cuid())
-  placeName  String   @unique
-  latitude   Decimal  @db.Decimal(10, 7)
-  longitude  Decimal  @db.Decimal(10, 7)
-  timezoneId String
-  updatedAt  DateTime @updatedAt
-}
-
-model Dashboard {
-  id                   String   @id @default(cuid())
-  name                 String
-  notificationsEnabled Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id           String   @id @default(cuid())
+  placeName    String   @unique
+  latitude     Decimal  @db.Decimal(10, 7)
+  longitude    Decimal  @db.Decimal(10, 7)
+  timezoneId   String
+  timezoneName String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model TimezoneCache {
-  id         String   @id @default(cuid())
-  latitude   Decimal  @db.Decimal(10, 7)
-  longitude  Decimal  @db.Decimal(10, 7)
-  dateKey    String
-  utcOffset  Int
-  timezoneId String
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(cuid())
+  latitude     Decimal  @db.Decimal(10, 7)
+  longitude    Decimal  @db.Decimal(10, 7)
+  dateKey      String
+  utcOffset    Int
+  timezoneId   String
+  timezoneName String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([latitude, longitude, dateKey])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum UserRole {
+  USER
+  ASTROLOGER
+  ADMIN
 }
 
 enum JobStatus {
@@ -113,4 +164,10 @@ enum JobStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum ChartType {
+  RASI
+  NORTH_INDIAN
+  SOUTH_INDIAN
 }

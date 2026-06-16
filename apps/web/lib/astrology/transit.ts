@@ -1,9 +1,8 @@
 import { swe_rise_trans } from "./swisseph";
-import { SE_SUN, SEFLG_SWIEPH } from "./constants";
+import { SE_SUN, SE_MOON, SEFLG_SWIEPH } from "./constants";
 
 export const SE_CALC_RISE = 1;
 export const SE_CALC_SET = 2;
-export const SE_MOON = 1; // SwissEph Planet ID for Moon
 
 export async function getSunriseSunset(
   jd_ut: number, 

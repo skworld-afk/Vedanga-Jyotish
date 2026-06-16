@@ -1,21 +1,42 @@
-import { getAscendantDegree, getPlanetDegree } from "./swisseph";
+import { getAscendantDegree, getPlanetData } from "./swisseph";
 import { SE_SUN, SE_MOON, SE_MERCURY, SE_VENUS, SE_MARS, SE_JUPITER, SE_SATURN, SE_TRUE_NODE } from "./constants";
 import { calculateD9Longitude } from "./divisional";
 
 export async function calculateChart(julianDay: number, latitude: number, longitude: number) {
   const ascendant = getAscendantDegree(julianDay, latitude, longitude);
 
+  const sun = getPlanetData(julianDay, SE_SUN);
+  const moon = getPlanetData(julianDay, SE_MOON);
+  const mercury = getPlanetData(julianDay, SE_MERCURY);
+  const venus = getPlanetData(julianDay, SE_VENUS);
+  const mars = getPlanetData(julianDay, SE_MARS);
+  const jupiter = getPlanetData(julianDay, SE_JUPITER);
+  const saturn = getPlanetData(julianDay, SE_SATURN);
+  const rahu = getPlanetData(julianDay, SE_TRUE_NODE);
+
   const planets = {
     ascendant,
-    sun: getPlanetDegree(julianDay, SE_SUN),
-    moon: getPlanetDegree(julianDay, SE_MOON),
-    mercury: getPlanetDegree(julianDay, SE_MERCURY),
-    venus: getPlanetDegree(julianDay, SE_VENUS),
-    mars: getPlanetDegree(julianDay, SE_MARS),
-    jupiter: getPlanetDegree(julianDay, SE_JUPITER),
-    saturn: getPlanetDegree(julianDay, SE_SATURN),
-    rahu: getPlanetDegree(julianDay, SE_TRUE_NODE),
-    ketu: (getPlanetDegree(julianDay, SE_TRUE_NODE) + 180) % 360,
+    sun: sun.longitude,
+    moon: moon.longitude,
+    mercury: mercury.longitude,
+    venus: venus.longitude,
+    mars: mars.longitude,
+    jupiter: jupiter.longitude,
+    saturn: saturn.longitude,
+    rahu: rahu.longitude,
+    ketu: (rahu.longitude + 180) % 360,
+  };
+
+  const speeds = {
+    sun: sun.speed,
+    moon: moon.speed,
+    mercury: mercury.speed,
+    venus: venus.speed,
+    mars: mars.speed,
+    jupiter: jupiter.speed,
+    saturn: saturn.speed,
+    rahu: rahu.speed,
+    ketu: rahu.speed,
   };
 
   const divisional = {
@@ -33,5 +54,5 @@ export async function calculateChart(julianDay: number, latitude: number, longit
     }
   };
 
-  return { planets, divisional };
+  return { planets, speeds, divisional };
 }

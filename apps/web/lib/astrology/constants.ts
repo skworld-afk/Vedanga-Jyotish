@@ -9,6 +9,8 @@ export const SE_MEAN_NODE = 10;
 export const SE_TRUE_NODE = 11;
 
 export const SEFLG_SWIEPH = 2;
+export const SEFLG_SIDEREAL = 65536;
+export const SEFLG_SPEED = 256;
 
 export const SIDM_LAHIRI = 1;
 

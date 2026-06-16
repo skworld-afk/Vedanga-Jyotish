@@ -1,6 +1,7 @@
 import koffi from "koffi";
 import path from "path";
 import os from "os";
+import { SEFLG_SIDEREAL, SEFLG_SPEED, SIDM_LAHIRI } from "./constants";
 
 const platform = os.platform();
 const binDir = path.join(process.cwd(), "bin");
@@ -54,10 +55,8 @@ export const swe_rise_trans = swe.func(
 swe_set_ephe_path(ephePath);
 
 const SEFLG_SWIEPH = 2;
-const SEFLG_SIDEREAL = 64;
-const SE_SIDM_LAHIRI = 1;
 
-swe_set_sid_mode(SE_SIDM_LAHIRI, 0, 0);
+swe_set_sid_mode(SIDM_LAHIRI, 0, 0);
 
 export function getPlanetDegree(jd: number, planetId: number): number {
   const xx = new Float64Array(6);
@@ -68,27 +67,29 @@ export function getPlanetDegree(jd: number, planetId: number): number {
   return xx[0] as number;
 }
 
+export function getPlanetData(jd: number, planetId: number): { longitude: number; speed: number } {
+  const xx = new Float64Array(6);
+  const serr = Buffer.alloc(256);
+  const flag = SEFLG_SWIEPH | SEFLG_SIDEREAL | SEFLG_SPEED;
+  
+  swe_calc_ut(jd, planetId, flag, xx, serr);
+  return { longitude: xx[0] as number, speed: xx[3] as number };
+}
+
 export function getAscendantDegree(jd: number, lat: number, lon: number): number {
   const cusps = new Float64Array(13);
   const ascmc = new Float64Array(10);
-  swe_houses_ex(jd, 0, lat, lon, 'P'.charCodeAt(0), cusps, ascmc);
-  const ayanamsha = swe_get_ayanamsa_ut(jd);
-  let siderealAscendant = (ascmc[0] as number) - ayanamsha;
-  if (siderealAscendant < 0) siderealAscendant += 360.0;
-  return siderealAscendant;
+  const flags = SEFLG_SWIEPH | SEFLG_SIDEREAL;
+  swe_houses_ex(jd, flags, lat, lon, 'P'.charCodeAt(0), cusps, ascmc);
+  return ascmc[0] as number;
 }
 
 export function getHouseCusps(jd: number, lat: number, lon: number): number[] {
   const cusps = new Float64Array(13);
   const ascmc = new Float64Array(10);
+  const flags = SEFLG_SWIEPH | SEFLG_SIDEREAL;
   // 'O' computes Porphyry houses which dictate standard Sripathi mappings
-  swe_houses_ex(jd, 0, lat, lon, 'O'.charCodeAt(0), cusps, ascmc); 
-  const ayanamsha = swe_get_ayanamsa_ut(jd);
-  const siderealCusps = [];
-  for(let i=1; i<=12; i++) {
-     let val = (cusps[i] as number) - ayanamsha;
-     if (val < 0) val += 360.0;
-     siderealCusps.push(val);
-  }
-  return siderealCusps;
+  swe_houses_ex(jd, flags, lat, lon, 'O'.charCodeAt(0), cusps, ascmc); 
+  // The cusps array is 1-indexed, and we want all 12 cusps.
+  return Array.from(cusps.slice(1, 13));
 }

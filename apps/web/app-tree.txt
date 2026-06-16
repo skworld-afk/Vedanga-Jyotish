@@ -1,0 +1,140 @@
+Folder PATH listing for volume New Volume
+Volume serial number is E628-22EC
+E:\APP\ASTRO-SAAS\APPS\WEB\APP
+¦   favicon.ico
+¦   globals.css
+¦   layout.tsx
+¦   page.module.css
+¦   page.tsx
+¦   
++---(marketing)
+¦       page.tsx
+¦       
++---api
+¦   +---chart
+¦   ¦   ¦   route.ts
+¦   ¦   ¦   
+¦   ¦   +---create
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d10
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d12
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d16
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d2
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d20
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d24
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d27
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d3
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d30
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d40
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d45
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d60
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d7
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---d9
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---dasha
+¦   ¦   +---dosha
+¦   ¦   +---houses
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---nakshatra
+¦   ¦   +---rashi
+¦   ¦   ¦       route.ts
+¦   ¦   ¦       
+¦   ¦   +---yoga
+¦   +---dasha
+¦   ¦       route.ts
+¦   ¦       
+¦   +---dosha
+¦   ¦       route.ts
+¦   ¦       
+¦   +---prediction
+¦   ¦       route.ts
+¦   ¦       
+¦   +---transit
+¦   ¦       route.ts
+¦   ¦       
+¦   +---yoga
+¦           route.ts
+¦           
++---chart
+¦   +---create
+¦           actions.ts
+¦           page.tsx
+¦           
++---dashboard
+¦   ¦   actions.ts
+¦   ¦   dashboard-settings-form.tsx
+¦   ¦   layout.tsx
+¦   ¦   page.tsx
+¦   ¦   SettingsForm.tsx
+¦   ¦   
+¦   +---planetary
+¦   ¦       page.tsx
+¦   ¦       
+¦   +---[id]
+¦       ¦   actions.ts
+¦       ¦   AdminView.tsx
+¦       ¦   error.tsx
+¦       ¦   InteractiveDasha.tsx
+¦       ¦   layout.tsx
+¦       ¦   NorthIndianChart.tsx
+¦       ¦   page.tsx
+¦       ¦   PrintButton.tsx
+¦       ¦   SessionTimeout.tsx
+¦       ¦   SidebarWrapper.tsx
+¦       ¦   Vimshottari.tsx
+¦       ¦   
+¦       +---dasha
+¦       ¦       page.tsx
+¦       ¦       
+¦       +---divisional
+¦       ¦       page.tsx
+¦       ¦       
+¦       +---reports
+¦       ¦       page.tsx
+¦       ¦       
+¦       +---transit
+¦       ¦       page.tsx
+¦       ¦       
+¦       +---yoga
+¦               page.tsx
+¦               
++---fonts
+¦       GeistMonoVF.woff
+¦       GeistVF.woff
+¦       
++---pages
++---panchang
+        actions.ts
+        AdminView.tsx
+        index.ts
+        page.tsx
+        

@@ -14,6 +14,26 @@ export const TITHIS = [
   "Navami", "Dashami", "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Amavasya"
 ];
 
+export const YOGAS = [
+  "Vishkambha", "Priti", "Ayushman", "Saubhagya", "Shobhana", "Atiganda",
+  "Sukarma", "Dhriti", "Shula", "Ganda", "Vriddhi", "Dhruva", "Vyaghata",
+  "Harshana", "Vajra", "Siddhi", "Vyatipata", "Variyan", "Parigha", "Shiva",
+  "Siddha", "Sadhya", "Shubha", "Shukla", "Brahma", "Indra", "Vaidhriti"
+];
+
+export const KARANAS = [
+  "Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti",
+  "Shakuni", "Chatushpada", "Naga", "Kimstughna"
+];
+
+export function getKaranaName(karanaNumber: number): string {
+  if (karanaNumber === 1) return "Kimstughna";
+  if (karanaNumber === 58) return "Shakuni";
+  if (karanaNumber === 59) return "Chatushpada";
+  if (karanaNumber === 60) return "Naga";
+  return KARANAS[(karanaNumber - 2) % 7] || "Unknown";
+}
+
 export function getNakshatra(moon: number) {
   return Math.floor(moon / (360 / 27)) + 1;
 }
@@ -32,10 +52,13 @@ export function calculatePanchang(sunLon: number, moonLon: number) {
   const tithiIndex = Math.floor(diff / 12);
   const paksha = tithiIndex < 15 ? "Shukla" : "Krishna";
   
+  const karanaNumber = Math.floor(diff / 6) + 1;
+  const yogaIndex = Math.floor(((moonLon + sunLon) % 360) / (360 / 27));
+
   return {
     nakshatra: `${NAKSHATRAS[nakshatraIndex]} (Pada ${pada})`,
     tithi: `${TITHIS[tithiIndex]} (${paksha})`,
-    karana: `Karana ${Math.floor(diff / 6) + 1}`,
-    yoga: `Yoga ${Math.floor(((moonLon + sunLon) % 360) / (360 / 27)) + 1}`
+    karana: getKaranaName(karanaNumber),
+    yoga: YOGAS[yogaIndex] || `Yoga ${yogaIndex + 1}`
   };
 }

@@ -1,0 +1,26 @@
+Folder PATH listing for volume New Volume
+Volume serial number is E628-22EC
+E:\APP\ASTRO-SAAS\APPS\WEB\LIB
++---astrology
+        chart.ts
+        constants.ts
+        dasha.ts
+        divisional.ts
+        Footer.tsx
+        Header.tsx
+        houses.ts
+        index.ts
+        karana.ts
+        muhurta.ts
+        nakshatra.ts
+        panchang.ts
+        route.ts
+        signs.ts
+        sunrise.ts
+        swisseph.ts
+        tithi.ts
+        transit.ts
+        types.ts
+        varga.ts
+        yoga.ts
+        

@@ -1,0 +1,19 @@
+Folder PATH listing for volume New Volume
+Volume serial number is E628-22EC
+E:\APP\ASTRO-SAAS\APPS\WEB\COMPONENTS
++---astrology
+¦       DashaTimeline.tsx
+¦       NorthIndianChart.tsx
+¦       PanchangCard.tsx
+¦       PlanetTable.tsx
+¦       SouthIndianChart.tsx
+¦       YogaList.tsx
+¦       
++---layout
+¦       DashboardHeader.tsx
+¦       Footer.tsx
+¦       Header.tsx
+¦       LocationSearch.tsx
+¦       Sidebar.tsx
+¦       
++---ui
