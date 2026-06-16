@@ -56,3 +56,5 @@ export async function calculateChart(julianDay: number, latitude: number, longit
 
   return { planets, speeds, divisional };
 }
+
+export const generateChart = calculateChart;

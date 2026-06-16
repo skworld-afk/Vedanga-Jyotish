@@ -16,3 +16,5 @@ export function getDivisionalChart(jd: number, varga: string) {
     jd,
   };
 }
+
+export const buildDivisionalChart = getDivisionalChart;
