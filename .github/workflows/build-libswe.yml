@@ -1,40 +1,30 @@
-name: Build Swiss Ephemeris
+name: Build Swiss Ephemeris for Amazon Linux 2023
 
 on:
-  workflow_dispatch:
-
-permissions:
-  contents: write
+  workflow_dispatch: # Allows you to trigger this manually from the GitHub UI
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push the compiled file back to the repo
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Uses your exact compile commands but via native docker to remove warnings
-      - name: Build in Amazon Linux 2023
+      - name: Build libswe.so in Amazon Linux 2023 container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace amazonlinux:2023 /bin/bash -c "
-            dnf -y update && \
-            dnf -y install gcc gcc-c++ make && \
-            
-            cd /workspace/cpp/swisseph && \
-            
-            gcc -fPIC -O2 -c *.c && \
-            gcc -shared -o libswe.so *.o -lm && \
-            
-            mkdir -p /workspace/apps/web/bin && \
-            cp libswe.so /workspace/apps/web/bin/libswe.so
-          "
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace/cpp/swisseph \
+            amazonlinux:2023 \
+            bash -c "yum groupinstall -y 'Development Tools' && make libswe.so && mkdir -p /workspace/apps/web/bin && cp libswe.so /workspace/apps/web/bin/"
 
-      - name: Commit binary
+      - name: Commit and push the compiled binary
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add apps/web/bin/libswe.so
-          git commit -m "build: amazon linux libswe" || echo "No changes"
+          git commit -m "chore: build libswe.so for Amazon Linux 2023" || echo "No changes to commit"
           git push
