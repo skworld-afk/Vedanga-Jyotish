@@ -1,44 +1,40 @@
-name: Build and Inject Swiss Ephemeris for Vercel
+name: Build Swiss Ephemeris
 
 on:
-  workflow_dispatch: # Allows you to trigger this manually via GitHub website
+  workflow_dispatch:
 
-env:
-  # Silences the Node 20 deprecation warning by allowing the runner fallback
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: write
 
     steps:
-      # 1. Checkout using the native host runner (prevents authentication/git exit code 2 errors)
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Compile inside Amazon Linux 2023 via simple Docker command rather than a broken wrapper
-      - name: Compile Swiss Ephemeris inside AL2023
+      # Uses your exact compile commands but via native docker to remove warnings
+      - name: Build in Amazon Linux 2023
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace amazonlinux:2023 /bin/bash -c "
             dnf -y update && \
-            dnf -y groupinstall \"Development Tools\" && \
-            dnf -y install wget tar gzip && \
-            wget https://github.com -O /tmp/swe.tar.gz && \
-            tar -xzf /tmp/swe.tar.gz -C /tmp && \
-            cd /tmp/swisseph-2.10.03 && \
-            make -f Makefile.linux && \
+            dnf -y install gcc gcc-c++ make && \
+            
+            cd /workspace/cpp/swisseph && \
+            
+            gcc -fPIC -O2 -c *.c && \
+            gcc -shared -o libswe.so *.o -lm && \
+            
             mkdir -p /workspace/apps/web/bin && \
             cp libswe.so /workspace/apps/web/bin/libswe.so
           "
 
-      # 3. Commit and push the file cleanly back using the host runner
-      - name: Commit and Push Changes
+      - name: Commit binary
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
           git add apps/web/bin/libswe.so
-          git commit -m "fix: update libswe.so with Vercel compatible glibc binary" || echo "No changes to commit"
+          git commit -m "build: amazon linux libswe" || echo "No changes"
           git push
