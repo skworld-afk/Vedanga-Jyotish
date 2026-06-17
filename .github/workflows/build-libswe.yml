@@ -6,9 +6,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # Grants the script write permissions to push the file back to your repo
+    permissions:
+      contents: write
 
     steps:
-      # 1. Checkout your code into the runner
+      # 1. Checkout your code using the latest Node 24 compatible version
       - name: Checkout Code
         uses: actions/checkout@v4
 
