@@ -7,41 +7,46 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
-    # Grants the script write permissions to push the file back to your repo
+    # Grants the runner write permissions to push the file back to your repo
     permissions:
       contents: write
 
+    # Run the entire job inside Amazon Linux 2023 to perfectly match Vercel's GLIBC baseline
+    container:
+      image: amazonlinux:2023
+
     steps:
-      # 1. Checkout your code using the latest Node 24 compatible version
+      # 1. Install git and compilation tools directly inside the container environment
+      - name: Install Dependencies
+        run: |
+          dnf -y update
+          dnf -y groupinstall "Development Tools"
+          dnf -y install wget tar gzip git
+
+      # 2. Checkout your code using the official checkout utility
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Run compilation inside Amazon Linux 2023 container to match Vercel GLIBC
-      - name: Compile Library in AL2023
-        uses: addnab/docker-run-action@v3
-        with:
-          image: amazonlinux:2023
-          options: -v ${{ github.workspace }}:/workspace
-          run: |
-            dnf -y update
-            dnf -y groupinstall "Development Tools"
-            dnf -y install wget tar gzip
-            
-            # Download Swiss Ephemeris Source
-            wget https://github.com -O /tmp/swe.tar.gz
-            tar -xzf /tmp/swe.tar.gz -C /tmp
-            cd /tmp/swisseph-2.10.03
-            
-            # Build the library
-            make -f Makefile.linux
-            
-            # Overwrite the broken libswe.so file inside your exact folder
-            mkdir -p /workspace/apps/web/bin
-            cp libswe.so /workspace/apps/web/bin/libswe.so
+      # 3. Download the C source and compile the library 
+      - name: Compile Swiss Ephemeris
+        run: |
+          wget https://github.com -O /tmp/swe.tar.gz
+          tar -xzf /tmp/swe.tar.gz -C /tmp
+          cd /tmp/swisseph-2.10.03
+          
+          # Compile the shared object target binary
+          make -f Makefile.linux
+          
+          # Force copy into your exact web app folder structure
+          mkdir -p apps/web/bin
+          cp libswe.so apps/web/bin/libswe.so
 
-      # 3. Automatically push the corrected binary back into your repo
+      # 4. Automatically commit and push the working binary back to your repository
       - name: Commit and Push Changes
         run: |
+          # Safe directory marker needed for Git inside a container environment
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
           git add apps/web/bin/libswe.so
