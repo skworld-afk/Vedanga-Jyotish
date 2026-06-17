@@ -190,10 +190,9 @@ export function buildBhavaDetailsTable(
   const bhavas: BhavaDashboardData[] = [];
 
   for (let i = 1; i <= 12; i++) {
-    const middle = (ascendant + (i - 1) * 30) % 360;
-    let start = middle - 15;
-    if (start < 0) start += 360;
-    const end = (middle + 15) % 360;
+    const start = (ascendant + (i - 1) * 30) % 360;
+    const middle = (start + 15) % 360;
+    const end = (start + 30) % 360;
 
     bhavas.push({
       bhava: i,
@@ -407,7 +406,7 @@ export async function buildCompleteDashboard(
   // Dynamically calculate planetary positions on the fly ensuring real-time 
   // data matches the core swisseph engine instead of relying on stale db caches
   // =========================================================================
-  const calculatedData = await calculateChart(bJd, lat, lon);
+  const calculatedData = calculateChart(bJd, lat, lon);
   const planets = calculatedData.planets;
   const speeds = calculatedData.speeds;
   const divisional = calculatedData.divisional;
@@ -431,8 +430,8 @@ export async function buildCompleteDashboard(
   const ayanD = Math.floor(ayanamsaVal);
   const ayanM = Math.floor((ayanamsaVal - ayanD) * 60);
 
-  const { sunrise, sunset } = await getSunriseSunset(bJd, lat, lon);
-  const { rise: moonrise, set: moonset } = await getMoonriseMoonset(bJd, lat, lon);
+  const { sunrise, sunset } = getSunriseSunset(bJd, lat, lon);
+  const { rise: moonrise, set: moonset } = getMoonriseMoonset(bJd, lat, lon);
   const weekday = bDate.getDay();
   
   const muhurtas = (sunrise && sunset) ? calculateMuhurtas(sunrise, sunset, weekday) : null;

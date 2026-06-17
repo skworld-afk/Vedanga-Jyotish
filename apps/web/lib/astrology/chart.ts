@@ -2,7 +2,7 @@ import { getAscendantDegree, getPlanetData } from "./swisseph";
 import { SE_SUN, SE_MOON, SE_MERCURY, SE_VENUS, SE_MARS, SE_JUPITER, SE_SATURN, SE_TRUE_NODE } from "./constants";
 import { calculateD9Longitude } from "./divisional";
 
-export async function calculateChart(julianDay: number, latitude: number, longitude: number) {
+export function calculateChart(julianDay: number, latitude: number, longitude: number) {
   const ascendant = getAscendantDegree(julianDay, latitude, longitude);
 
   const sun = getPlanetData(julianDay, SE_SUN);

@@ -4,11 +4,11 @@ import { SE_SUN, SE_MOON, SEFLG_SWIEPH } from "./constants";
 export const SE_CALC_RISE = 1;
 export const SE_CALC_SET = 2;
 
-export async function getSunriseSunset(
+export function getSunriseSunset(
   jd_ut: number, 
   lat: number, 
   lng: number
-): Promise<{ sunrise: number | null; sunset: number | null }> {
+): { sunrise: number | null; sunset: number | null } {
   // Geopos expects an array of [longitude, latitude, height]
   const geopos = new Float64Array([lng, lat, 0]);
   const tretRise = new Float64Array(1);
@@ -32,11 +32,11 @@ export async function getSunriseSunset(
   };
 }
 
-export async function getMoonriseMoonset(
+export function getMoonriseMoonset(
   jd_ut: number, 
   lat: number, 
   lng: number
-): Promise<{ rise: number | null; set: number | null }> {
+): { rise: number | null; set: number | null } {
   const geopos = new Float64Array([lng, lat, 0]);
   const tretRise = new Float64Array(1);
   const serrRise = Buffer.alloc(256);
