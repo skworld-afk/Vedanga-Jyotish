@@ -29,10 +29,10 @@ export default function LandingPage() {
           the Eye of the Vedas. It studies the manifestation of Karma
           through Grahas, Rashis, Nakshatras, Dashas and Divisional Charts.
         </p>
-
+    
         {/* Image + Quote */}
-        <div className="w-full max-w-[110px] md:max-w-[130px] lg:max-w-[150px] mx-auto mb-16 px-4 mt-2">
-          <div className="relative">
+        <div className="flex flex-col items-center mb-16 mt-2 w-full">
+          <div className="w-full max-w-[110px] md:max-w-[130px] lg:max-w-[150px] z-0 relative">
             <div className="border-[6px] md:border-[8px] border-[#FFFDF8] outline outline-1 outline-[#DEB887] rounded-t-full rounded-b-3xl shadow-2xl overflow-hidden">
               <Image
                 src="/parashara.jpg"
@@ -42,36 +42,20 @@ export default function LandingPage() {
                 className="w-full h-auto object-cover sepia-[0.35] hover:sepia-0 transition-all duration-700"
               />
             </div>
-
-            <blockquote className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[240%] max-w-[320px] bg-[#FFFDF8] border border-[#DEB887] rounded-2xl shadow-xl p-4 md:p-6 text-center z-10">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FDFBF7] px-5 text-[#8B4513] text-3xl">
-                ✧
-              </div>
-              <div className="text-xl md:text-2xl font-bold text-[#8B4513] leading-relaxed mb-2">
-                &quot;कर्म-फल-विपाक-काल-विधानम्&quot;
-              </div>
-              <div className="text-sm md:text-base italic text-[#5D4037] font-medium">
-                The science of understanding the timing of karmic results.
-              </div>
-            </blockquote>
           </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center">
-          <Link
-            href="/chart/create"
-            className="flex items-center justify-center bg-gradient-to-br from-[#8B4513] to-[#5D4037] text-[#FFFDF8] px-8 py-4 rounded-xl text-lg font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
-          >
-            Create Birth Chart
-          </Link>
-
-          <a
-            href="#parashara"
-            className="flex items-center justify-center border-2 border-[#8B4513] text-[#8B4513] hover:bg-[#8B4513] hover:text-[#FFFDF8] px-8 py-4 rounded-xl text-lg font-bold transition-all"
-          >
-            Learn Jyotish
-          </a>
+          <blockquote className="relative z-10 mt-8 w-[90%] max-w-[320px] bg-[#FFFDF8] border border-[#DEB887] rounded-2xl shadow-xl p-6 pt-12 text-center">
+           
+            <div className="text-xl md:text-2xl font-bold text-[#8B4513] leading-relaxed mb-2 mt-2">
+              &quot;कर्म-फल-विपाक-काल-विधानम्&quot;
+            </div>
+            <div className="text-sm md:text-base italic text-[#5D4037] font-medium">
+              The science of understanding the timing of karmic results.
+            </div>
+          </blockquote>
         </div>
+       
+        
       </div>
 
       {/* Small space */}

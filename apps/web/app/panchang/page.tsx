@@ -5,14 +5,14 @@ import { LocationSearch } from "@/components/layout/LocationSearch";
 import { Suspense } from "react";
 import { 
   swe_julday, getPlanetDegree, getAscendantDegree, 
-  getSunriseSunset, getMoonriseMoonset, calculatePanchang, calculateMuhurtas, calculateActiveHora 
+  getSunriseSunset, getMoonriseMoonset, calculatePanchang, calculateActiveHora 
 } from "@/lib/astrology/index";
 
 const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 const SIGN_ABBR = ["Ar", "Ta", "Ge", "Ca", "Le", "Vi", "Li", "Sc", "Sg", "Cp", "Aq", "Pi"];
 const VEDIC_SIGNS = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena"];
 const LUNAR_MONTHS = ["Chaitra", "Vaishakha", "Jyeshtha", "Ashadha", "Shravana", "Bhadrapada", "Ashvina", "Kartika", "Margashirsha", "Pausha", "Magha", "Phalguna"];
-const WEEKDAYS = ["Raviwara", "Somawara", "Mangalawara", "Budhawara", "Guruwara", "Shukrawara", "Shaniwara"];
+const WEEKDAYS = ["Ravivaar", "Somvaar", "Mangalvaar", "Budhvaar", "Guruvaar", "Shukravaar", "Shanivaar"];
 
 function formatDeg(deg: number) {
   const signDeg = deg % 30;
@@ -21,19 +21,36 @@ function formatDeg(deg: number) {
   return `${d}° ${m}'`;
 }
 
+function getTzOffset(timeZone: string) {
+  try {
+    const date = new Date();
+    const tzString = date.toLocaleString("en-US", { timeZone });
+    const utcString = date.toLocaleString("en-US", { timeZone: "UTC" });
+    const tzDate = new Date(tzString);
+    const utcDate = new Date(utcString);
+    return (tzDate.getTime() - utcDate.getTime()) / 3600000;
+  } catch (e) {
+    return 5.5;
+  }
+}
+
 function formatJdTime(jd: number, tzOffsetHours: number = 5.5) {
   if (!jd) return "N/A";
   const gmtHours = ((jd + 0.5) % 1) * 24;
-  const localHours = (gmtHours + tzOffsetHours + 24) % 24;
-  const h = Math.floor(localHours);
-  const m = Math.floor((localHours - h) * 60);
+  const localHours = (gmtHours + tzOffsetHours + 48) % 24;
+  let h = Math.floor(localHours);
+  let m = Math.round((localHours - h) * 60);
+  if (m === 60) {
+    m = 0;
+    h = (h + 1) % 24;
+  }
   const ampm = h >= 12 ? 'PM' : 'AM';
   const h12 = h % 12 || 12;
   return `${h12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
-function getCurrentChoghadiya(jd: number, sunrise: number, sunset: number, weekday: number): string {
-  if (!sunrise || !sunset) return "Unknown";
+function getCurrentChoghadiya(jd: number, sunrise: number, sunset: number, weekday: number) {
+  if (!sunrise || !sunset) return { name: "Unknown", start: 0, end: 0 };
   const daySeq = [
     ["Udveg", "Chal", "Labh", "Amrit", "Kaal", "Shubh", "Rog", "Udveg"],
     ["Amrit", "Kaal", "Shubh", "Rog", "Udveg", "Chal", "Labh", "Amrit"],
@@ -55,7 +72,11 @@ function getCurrentChoghadiya(jd: number, sunrise: number, sunset: number, weekd
   if (jd >= sunrise && jd < sunset) {
     const portion = (sunset - sunrise) / 8;
     const index = Math.max(0, Math.min(7, Math.floor((jd - sunrise) / portion)));
-    return daySeq[weekday]?.[index] || "Unknown";
+    return {
+      name: daySeq[weekday]?.[index] || "Unknown",
+      start: sunrise + index * portion,
+      end: sunrise + (index + 1) * portion
+    };
   } else {
     let activeWeekday = weekday;
     let nightStart = sunset;
@@ -67,58 +88,97 @@ function getCurrentChoghadiya(jd: number, sunrise: number, sunset: number, weekd
     }
     const portion = (nightEnd - nightStart) / 8;
     const index = Math.max(0, Math.min(7, Math.floor((jd - nightStart) / portion)));
-    return nightSeq[activeWeekday]?.[index] + " (Night)" || "Unknown";
+    return {
+      name: (nightSeq[activeWeekday]?.[index] || "Unknown") + " (Night)",
+      start: nightStart + index * portion,
+      end: nightStart + (index + 1) * portion
+    };
   }
+}
+
+function getDailyTimings(sunrise: number, sunset: number, weekday: number) {
+  if (!sunrise || !sunset) return null;
+  const dayDuration = sunset - sunrise;
+  const p8 = dayDuration / 8;
+  const p15 = dayDuration / 15;
+  const rahu = [7, 1, 6, 4, 5, 3, 2];
+  const yama = [4, 3, 2, 1, 0, 6, 5];
+  const gulika = [6, 5, 4, 3, 2, 1, 0];
+  
+  const rIdx = rahu[weekday] ?? 0;
+  const yIdx = yama[weekday] ?? 0;
+  const gIdx = gulika[weekday] ?? 0;
+
+  return {
+    rahu: { start: sunrise + rIdx * p8, end: sunrise + (rIdx + 1) * p8 },
+    yama: { start: sunrise + yIdx * p8, end: sunrise + (yIdx + 1) * p8 },
+    gulika: { start: sunrise + gIdx * p8, end: sunrise + (gIdx + 1) * p8 },
+    abhijit: { start: sunrise + 7 * p15, end: sunrise + 8 * p15 }
+  };
 }
 
 const getHousePos = (h: number) => {
   const positions = [
-    { cx: 200, cy: 95,  sx: 200, sy: 162 }, // 1
-    { cx: 105, cy: 45,  sx: 145, sy: 80 },  // 2
-    { cx: 45,  cy: 105, sx: 85,  sy: 145 }, // 3
-    { cx: 110, cy: 200, sx: 165, sy: 200 }, // 4
-    { cx: 45,  cy: 295, sx: 85,  sy: 255 }, // 5
-    { cx: 105, cy: 355, sx: 145, sy: 320 }, // 6
-    { cx: 200, cy: 305, sx: 200, sy: 238 }, // 7
-    { cx: 295, cy: 355, sx: 255, sy: 320 }, // 8
-    { cx: 355, cy: 295, sx: 315, sy: 255 }, // 9
-    { cx: 290, cy: 200, sx: 235, sy: 200 }, // 10
-    { cx: 355, cy: 105, sx: 315, sy: 145 }, // 11
-    { cx: 295, cy: 45,  sx: 255, sy: 80 }   // 12
+    { cx: 200, cy: 100, sx: 200, sy: 180 }, // 1
+    { cx: 100, cy: 45,  sx: 100, sy: 80 },  // 2
+    { cx: 45,  cy: 100, sx: 80,  sy: 100 }, // 3
+    { cx: 100, cy: 200, sx: 180, sy: 200 }, // 4
+    { cx: 45,  cy: 300, sx: 80,  sy: 300 }, // 5
+    { cx: 100, cy: 355, sx: 100, sy: 320 }, // 6
+    { cx: 200, cy: 300, sx: 200, sy: 220 }, // 7
+    { cx: 300, cy: 355, sx: 300, sy: 320 }, // 8
+    { cx: 355, cy: 300, sx: 320, sy: 300 }, // 9
+    { cx: 300, cy: 200, sx: 220, sy: 200 }, // 10
+    { cx: 355, cy: 100, sx: 320, sy: 100 }, // 11
+    { cx: 300, cy: 45,  sx: 300, sy: 80 }   // 12
   ];
   return positions[h - 1];
 };
 
-// Force dynamic rendering so it always shows the *exact* current time on load
 export const dynamic = 'force-dynamic';
 
-export default async function PanchangPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
+export default async function PanchangPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const searchParams = await props.searchParams;
+  
+  const getParam = (val: string | string[] | undefined) => Array.isArray(val) ? val[0] : val;
+
   const now = new Date();
-  const lat = searchParams?.lat ? parseFloat(searchParams.lat) : 28.6139;
-  const lon = searchParams?.lon ? parseFloat(searchParams.lon) : 77.2090;
-  const city = searchParams?.city || "New Delhi";
-  const tzo = searchParams?.tzo ? parseFloat(searchParams.tzo) : 5.5;
-  const timezone = searchParams?.timezone || "Asia/Kolkata";
+  const latParam = getParam(searchParams?.lat);
+  const lonParam = getParam(searchParams?.lon);
+  const cityParam = getParam(searchParams?.city);
+  const timezoneParam = getParam(searchParams?.timezone);
+  const tzoParamStr = getParam(searchParams?.tzo);
+
+  const lat = latParam && latParam.trim() !== '' ? parseFloat(latParam) : 28.6139;
+  const lon = lonParam && lonParam.trim() !== '' ? parseFloat(lonParam) : 77.2090;
+  const city = cityParam?.trim() ? cityParam : "New Delhi";
+  const timezone = timezoneParam?.trim() ? timezoneParam : "Asia/Kolkata";
+  const tzoParam = tzoParamStr && tzoParamStr.trim() !== '' ? parseFloat(tzoParamStr) : null;
+  const tzo = tzoParam !== null ? tzoParam : getTzOffset(timezone);
 
   let displayDate;
   let displayTime;
+  let tzDate;
   try {
     displayDate = now.toLocaleDateString('en-US', { timeZone: timezone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     displayTime = now.toLocaleString('en-US', { timeZone: timezone, dateStyle: 'full', timeStyle: 'short' });
+    tzDate = new Date(now.toLocaleString("en-US", { timeZone: timezone }));
   } catch (e) {
     displayDate = now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     displayTime = now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' });
+    tzDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
   }
 
-  // 1. Calculate Exact Julian Day for Right Now
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth() + 1;
   const day = now.getUTCDate();
   const hour = now.getUTCHours() + now.getUTCMinutes() / 60.0 + now.getUTCSeconds() / 3600.0;
   const jd = swe_julday(year, month, day, hour, 1);
+  
+  // Calculate JD for 00:01 AM local time today to accurately fetch today's upcoming sunrise and sunset
+  const localHour = tzDate.getHours() + tzDate.getMinutes() / 60.0 + tzDate.getSeconds() / 3600.0;
+  const jdStart = jd - (localHour / 24) + (0.02 / 24);
 
-  // 2. Fetch Planet Degrees (Swiss Eph IDs: Sun=0, Moon=1, Mer=2, Ven=3, Mar=4, Jup=5, Sat=6, True Node=11)
   const sun = getPlanetDegree(jd, 0);
   const moon = getPlanetDegree(jd, 1);
   const mercury = getPlanetDegree(jd, 2);
@@ -130,31 +190,39 @@ export default async function PanchangPage(props: { searchParams: Promise<{ [key
   const ketu = (rahu + 180) % 360;
   const ascendant = getAscendantDegree(jd, lat, lon);
 
-  // 3. Compute Panchang & Timing
   const panchang = calculatePanchang(sun, moon);
-  const { sunrise, sunset } = await getSunriseSunset(jd, lat, lon);
-  const { rise: moonrise, set: moonset } = await getMoonriseMoonset(jd, lat, lon);
+  const { sunrise, sunset } = await getSunriseSunset(jdStart, lat, lon);
+  const { rise: moonrise, set: moonset } = await getMoonriseMoonset(jdStart, lat, lon);
   
-  let vedicWeekday = now.getDay();
-  if (sunrise && jd < sunrise) {
-    vedicWeekday = (vedicWeekday + 6) % 7;
-  }
+  const vedicWeekday = tzDate.getDay();
   
-  const muhurtas = (sunrise && sunset) ? calculateMuhurtas(sunrise, sunset, vedicWeekday) : null;
-  const currentHora = (sunrise && sunset) ? calculateActiveHora(jd, sunrise, sunset, vedicWeekday) : "Unknown";
-  const currentChoghadiya = (sunrise && sunset) ? getCurrentChoghadiya(jd, sunrise, sunset, now.getDay()) : "Unknown";
+  const muhurtas = (sunrise && sunset) ? getDailyTimings(sunrise as number, sunset as number, vedicWeekday) : null;
+  const currentHora = (sunrise && sunset) ? calculateActiveHora(jd, sunrise as number, sunset as number, vedicWeekday) : "Unknown";
+  const currentChoghadiya = (sunrise && sunset) ? getCurrentChoghadiya(jd, sunrise as number, sunset as number, tzDate.getDay()) : { name: "Unknown", start: 0, end: 0 };
 
-  // 4. Extended Panchang Elements
+  const relativeSpeed = 12.190749;
   const diff = (moon - sun + 360) % 360;
+  const tithiDegLeft = 12 - (diff % 12);
+  const tithiEndJd = jd + (tithiDegLeft / relativeSpeed);
+
+  const karanaDegLeft = 6 - (diff % 6);
+  const karanaEndJd = jd + (karanaDegLeft / relativeSpeed);
+
+  const moonSpeed = 13.176358;
+  const nakshatraDegLeft = (360/27) - (moon % (360/27));
+  const nakshatraEndJd = jd + (nakshatraDegLeft / moonSpeed);
+
+  const sunMoonSpeed = 14.1613; 
+  const yogaDegLeft = (360/27) - ((moon + sun) % (360/27));
+  const yogaEndJd = jd + (yogaDegLeft / sunMoonSpeed);
+
   const paksha = diff < 180 ? "Shukla Paksha" : "Krishna Paksha";
   const nakshatraPada = Math.floor((moon % (360/27)) / (360/108)) + 1;
   const sunsignVedic = VEDIC_SIGNS[Math.floor(sun / 30)];
   const moonsignVedic = VEDIC_SIGNS[Math.floor(moon / 30)];
   const hinduMonth = LUNAR_MONTHS[(Math.floor(sun / 30) + 1) % 12];
   const weekdayName = WEEKDAYS[vedicWeekday];
-  const pravishte = day; // Using standard day as proxy for solar day entry
 
-  // 5. Map for Chart & Details
   const planetsData = [
     { name: "Asc", deg: ascendant },
     { name: "Sun", deg: sun },
@@ -177,141 +245,233 @@ export default async function PanchangPage(props: { searchParams: Promise<{ [key
   });
 
   return (
-    <main className="min-h-screen bg-[#FDFBF7] text-[#3E2723] font-serif selection:bg-[#DEB887]/30 flex flex-col">
+    <main className="min-h-screen bg-zinc-950 text-zinc-200 font-sans flex flex-col">
       <Header />
       
-      <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 md:py-12 flex flex-col items-center">
-        <div className="text-center space-y-4 w-full">
-          <h1 className="text-3xl md:text-5xl font-black text-[#8B4513] tracking-tight">Today&apos;s Panchang</h1>
-          <p className="text-lg text-[#5D4037]/80 font-medium" suppressHydrationWarning>
-            {displayTime}
-          </p>
+      <div className="flex-1 w-full flex flex-col items-center justify-center">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
           
-          <Suspense fallback={<div className="w-full max-w-sm mx-auto h-12 mt-4 bg-[#DEB887]/20 animate-pulse rounded-xl"></div>}>
-            <LocationSearch />
-          </Suspense>
-        </div>
-        
-        {/* Comprehensive Panchang Details */}
-        <div className="w-full bg-white p-6 md:p-8 rounded-3xl shadow-md border border-[#DEB887]/40 mt-8 text-left">
-          <div className="border-b border-[#DEB887]/30 pb-4 mb-6 text-center space-y-1">
-            <h2 className="text-2xl font-black text-[#8B4513] flex items-center justify-center gap-2">
-              <svg className="w-6 h-6 text-[#DEB887]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-              {city}
-            </h2>
-            <p className="text-lg text-gray-600 font-medium" suppressHydrationWarning>
-              {displayDate}
+          {/* Top Title & Search */}
+          <div className="flex flex-col items-center justify-center text-center space-y-6 mb-16">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tighter bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent">
+              Daily Panchang
+            </h1>
+            <p className="text-lg text-zinc-400 font-medium flex flex-wrap justify-center items-center gap-3" suppressHydrationWarning>
+              <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {city} <span className="text-zinc-700 mx-1">•</span> {displayDate} <span className="text-zinc-700 mx-1">•</span> {displayTime}
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-[15px] text-[#5D4037]">
-            <div className="space-y-3">
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Sunrise:</span> <span className="font-medium text-[#8B4513]">{formatJdTime(sunrise || 0, tzo)}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Sunset:</span> <span className="font-medium text-[#8B4513]">{formatJdTime(sunset || 0, tzo)}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Tithi:</span> <span>{panchang.tithi}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Nakshatra:</span> <span>{panchang.nakshatra} (Pada {nakshatraPada})</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Yoga:</span> <span>{panchang.yoga}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Karana:</span> <span>{panchang.karana}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Paksha:</span> <span>{paksha}</span></div>
-              <div className="flex justify-between pb-1"><span className="font-semibold">Weekday:</span> <span>{weekdayName}</span></div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Amanta Month:</span> <span>{hinduMonth}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Purnimanta Month:</span> <span>{hinduMonth}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Moonsign:</span> <span>{moonsignVedic}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Sunsign:</span> <span>{sunsignVedic}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Pravishte/Gate:</span> <span>{pravishte}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Shaka Samvat:</span> <span>{year - 78}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Vikram Samvat:</span> <span>{year + 57}</span></div>
-              <div className="flex justify-between border-b border-gray-100 pb-1"><span className="font-semibold">Gujarati Samvat:</span> <span>{year + 56}</span></div>
-              <div className="flex justify-between pb-1"><span className="font-semibold text-red-700">Rahu Kaal:</span> <span className="text-red-700">{muhurtas ? `${formatJdTime(muhurtas.rahu.start, tzo)} - ${formatJdTime(muhurtas.rahu.end, tzo)}` : 'N/A'}</span></div>
+            <div className="w-full max-w-xl mx-auto">
+              <Suspense fallback={<div className="w-full h-12 bg-zinc-900 animate-pulse rounded-2xl" />}>
+                <LocationSearch />
+              </Suspense>
             </div>
           </div>
-        </div>
-
-        {/* Detailed Slider / Accordion */}
-        <div className="w-full mt-8">
-          <details open className="w-full bg-white rounded-2xl shadow-sm border border-[#DEB887]/40 overflow-hidden group">
-            <summary className="text-lg font-bold text-[#8B4513] p-5 md:p-6 bg-[#FDFBF7] flex justify-between items-center cursor-pointer list-none outline-none hover:bg-orange-50 transition-colors">
-              <span className="flex items-center gap-2"><span className="text-2xl">📜</span> Advanced Timings &amp; Transit</span>
-              <span className="text-[#DEB887] group-open:rotate-180 transition-transform duration-300">▼</span>
-            </summary>
+          
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 xl:gap-12 items-stretch w-full">
             
-            <div className="p-6 md:p-8 space-y-12 border-t border-[#DEB887]/40">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold text-[#8B4513] mb-4 border-b border-[#DEB887]/30 pb-2">Daily Timings</h3>
-                  <div className="space-y-3 text-sm font-medium text-gray-700">
-                    <div className="flex justify-between p-2 bg-[#FDFBF7] rounded"><span>Sunrise - Sunset</span> <span className="font-bold text-[#8B4513]">{formatJdTime(sunrise || 0, tzo)} - {formatJdTime(sunset || 0, tzo)}</span></div>
-                    <div className="flex justify-between p-2 rounded"><span>Moonrise - Moonset</span> <span className="font-bold text-[#8B4513]">{formatJdTime(moonrise || 0, tzo)} - {formatJdTime(moonset || 0, tzo)}</span></div>
-                    <div className="flex justify-between p-2 bg-[#FDFBF7] rounded"><span>Active Hora</span> <span className="font-bold text-[#8B4513]">{currentHora}</span></div>
-                    <div className="flex justify-between p-2 rounded"><span>Choghadiya</span> <span className="font-bold text-[#8B4513]">{currentChoghadiya}</span></div>
+            {/* Column 1 */}
+            <div className="flex flex-col gap-8">
+              <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 shadow-xl hover:border-amber-500/50 transition-all duration-300 hover:shadow-2xl group">
+                <div className="flex flex-col items-center gap-3 mb-8">
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-2xl flex items-center justify-center text-3xl">✨</div>
+                  <h2 className="text-2xl font-semibold">Panchang Elements</h2>
+                </div>
+                <div className="space-y-5">
+                  <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+                    <span className="text-zinc-400">Tithi</span>
+                    <div className="text-right">
+                      <div className="font-semibold text-white">{panchang.tithi}</div>
+                      <div className="text-xs text-zinc-500">Ends {formatJdTime(tithiEndJd, tzo)}</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+                    <span className="text-zinc-400">Nakshatra</span>
+                    <div className="text-right">
+                      <div className="font-semibold text-white">{panchang.nakshatra} <span className="text-amber-400">(Pada {nakshatraPada})</span></div>
+                      <div className="text-xs text-zinc-500">Ends {formatJdTime(nakshatraEndJd, tzo)}</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+                    <span className="text-zinc-400">Yoga</span>
+                    <div className="font-semibold text-white text-right">{panchang.yoga}</div>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+                    <span className="text-zinc-400">Karana</span>
+                    <div className="font-semibold text-white">{panchang.karana}</div>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+                    <span className="text-zinc-400">Paksha</span>
+                    <span className="font-semibold text-amber-400">{paksha}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3">
+                    <span className="text-zinc-400">Weekday</span>
+                    <span className="font-semibold text-white">{weekdayName}</span>
                   </div>
                 </div>
-
-                {muhurtas && (
-                  <div>
-                    <h3 className="text-xl font-bold text-[#8B4513] mb-4 border-b border-[#DEB887]/30 pb-2">Important Muhurtas</h3>
-                    <div className="space-y-3 text-sm font-medium">
-                      <div className="flex justify-between p-2 bg-red-50 text-red-900 rounded border border-red-100"><span>Rahu Kaal</span> <span className="font-bold">{formatJdTime(muhurtas.rahu.start, tzo)} - {formatJdTime(muhurtas.rahu.end, tzo)}</span></div>
-                      <div className="flex justify-between p-2 bg-orange-50 text-orange-900 rounded border border-orange-100"><span>Yama Ganda</span> <span className="font-bold">{formatJdTime(muhurtas.yama.start, tzo)} - {formatJdTime(muhurtas.yama.end, tzo)}</span></div>
-                      <div className="flex justify-between p-2 bg-yellow-50 text-yellow-900 rounded border border-yellow-100"><span>Gulika Kaal</span> <span className="font-bold">{formatJdTime(muhurtas.gulika.start, tzo)} - {formatJdTime(muhurtas.gulika.end, tzo)}</span></div>
-                      <div className="flex justify-between p-2 bg-green-50 text-green-900 rounded border border-green-100"><span>Abhijit Muhurta</span> <span className="font-bold">{formatJdTime(muhurtas.abhijit.start, tzo)} - {formatJdTime(muhurtas.abhijit.end, tzo)}</span></div>
-                    </div>
-                  </div>
-                )}
               </div>
 
-              <div>
-                <h3 className="text-xl font-bold text-[#8B4513] mb-6 border-b border-[#DEB887]/30 pb-2 text-center">Celestial Snapshot</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div className="w-full max-w-[300px] mx-auto bg-[#FDFBF7] border-2 border-[#8B4513] shadow-inner aspect-square relative">
-                    <svg viewBox="0 0 400 400" className="w-full h-full font-serif select-none">
-                      <line x1="0" y1="0" x2="400" y2="400" stroke="#8B4513" strokeWidth="2" opacity="0.6" />
-                      <line x1="400" y1="0" x2="0" y2="400" stroke="#8B4513" strokeWidth="2" opacity="0.6" />
-                      <polygon points="200,0 400,200 200,400 0,200" fill="none" stroke="#8B4513" strokeWidth="2" opacity="0.8" />
-                      {Array.from({ length: 12 }, (_, i) => {
-                        const h = i + 1;
-                        const signIdx = (Math.floor(ascendant / 30) + i) % 12;
-                        const occupants = signMap[signIdx] || [];
-                        const pos = getHousePos(h);
-                        if (!pos) return null;
-                        return (
-                          <g key={h}>
-                            <text x={pos.sx} y={pos.sy} fontSize="14" fill="#DEB887" textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
-                              {signIdx + 1}
-                            </text>
-                            {occupants.length > 0 && (
-                              <text x={pos.cx} y={pos.cy} fontSize={occupants.length > 3 ? "12" : "15"} fill="#5D4037" textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
-                                {occupants.join(", ")}
-                              </text>
-                            )}
-                          </g>
-                        );
-                      })}
-                    </svg>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center font-black text-[#8B4513] text-xl opacity-15 pointer-events-none">
-                      <span>LIVE</span>
-                      <span>TRANSIT</span>
+              <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 shadow-xl hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl">
+                <div className="flex flex-col items-center gap-3 mb-8">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center text-3xl">🗓️</div>
+                  <h2 className="text-2xl font-semibold">Calendars</h2>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: "Amanta Month", value: hinduMonth },
+                    { label: "Purnimanta", value: hinduMonth },
+                    { label: "Shaka Samvat", value: year - 78 },
+                    { label: "Vikram Samvat", value: year + 57 },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 text-center hover:border-amber-400/30 transition-colors">
+                      <div className="text-xs text-zinc-500">{item.label}</div>
+                      <div className="font-semibold text-lg text-white mt-1">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2 */}
+            <div className="flex flex-col gap-8">
+              <div className="bg-zinc-900 border border-emerald-800 rounded-3xl p-8 shadow-xl hover:border-emerald-500/50 transition-all duration-300 hover:shadow-2xl">
+                <div className="flex flex-col items-center gap-3 mb-8">
+                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-3xl">शुभ</div>
+                  <h2 className="text-2xl font-semibold">Auspicious Timings</h2>
+                </div>
+                <div className="space-y-6 text-center">
+                  <div className="bg-emerald-950 border border-emerald-700 rounded-2xl p-6">
+                    <div className="text-emerald-400 text-sm tracking-widest">ACTIVE HORA</div>
+                    <div className="text-3xl font-bold text-emerald-300 mt-2">{currentHora}</div>
+                  </div>
+                  <div className="bg-emerald-950 border border-emerald-700 rounded-2xl p-6">
+                    <div className="text-emerald-400 text-sm tracking-widest">CHOGHADIYA</div>
+                    <div className="text-2xl font-bold text-emerald-300">{currentChoghadiya.name}</div>
+                    <div className="text-xs text-zinc-400 mt-2">
+                      {formatJdTime(currentChoghadiya.start, tzo)} — {formatJdTime(currentChoghadiya.end, tzo)}
                     </div>
                   </div>
-                  <div className="overflow-x-auto self-center">
-                    <table className="w-full text-center text-sm border-collapse">
-                      <thead><tr className="text-gray-500 border-b border-gray-200"><th className="py-2 uppercase font-bold text-xs tracking-wider">Planet</th><th className="py-2 uppercase font-bold text-xs tracking-wider">Sign</th><th className="py-2 uppercase font-bold text-xs tracking-wider">Degree</th></tr></thead>
-                      <tbody>{planetsData.map((p) => {
+                </div>
+              </div>
+
+              {muhurtas && (
+                <div className="bg-zinc-900 border border-rose-800 rounded-3xl p-8 shadow-xl hover:border-rose-500/50 transition-all duration-300 hover:shadow-2xl">
+                  <div className="flex flex-col items-center gap-3 mb-8">
+                    <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center text-3xl">अशुभ</div>
+                    <h2 className="text-2xl font-semibold">Inauspicious Timings</h2>
+                  </div>
+                  <div className="space-y-6 text-center">
+                    <div className="bg-rose-950 border border-rose-700 rounded-2xl p-5">
+                      <div className="text-rose-400">Rahu Kaal</div>
+                      <div className="font-semibold text-rose-300">{formatJdTime(muhurtas.rahu.start, tzo)} - {formatJdTime(muhurtas.rahu.end, tzo)}</div>
+                    </div>
+                    <div className="bg-rose-950 border border-rose-700 rounded-2xl p-5">
+                      <div className="text-rose-400">Yama Ganda</div>
+                      <div className="font-semibold text-rose-300">{formatJdTime(muhurtas.yama.start, tzo)} - {formatJdTime(muhurtas.yama.end, tzo)}</div>
+                    </div>
+                    <div className="bg-rose-950 border border-rose-700 rounded-2xl p-5">
+                      <div className="text-rose-400">Gulika Kaal</div>
+                      <div className="font-semibold text-rose-300">{formatJdTime(muhurtas.gulika.start, tzo)} - {formatJdTime(muhurtas.gulika.end, tzo)}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-zinc-900 border border-amber-800 rounded-3xl p-8 shadow-xl hover:border-amber-500/50 transition-all duration-300 hover:shadow-2xl">
+                <div className="flex flex-col items-center gap-3 mb-8">
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-3xl">☀️</div>
+                  <h2 className="text-2xl font-semibold">Sun & Moon</h2>
+                </div>
+                <div className="grid grid-cols-2 gap-6 text-center">
+                  {[
+                    { label: "Sunrise", value: formatJdTime(sunrise || 0, tzo) },
+                    { label: "Sunset", value: formatJdTime(sunset || 0, tzo) },
+                    { label: "Moonrise", value: formatJdTime(moonrise || 0, tzo) },
+                    { label: "Moonset", value: formatJdTime(moonset || 0, tzo) },
+                    { label: "Sunsign", value: sunsignVedic, color: "text-amber-400" },
+                    { label: "Moonsign", value: moonsignVedic },
+                  ].map((item, i) => (
+                    <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl py-5 hover:border-amber-500/30 transition-colors">
+                      <div className="text-xs text-zinc-500">{item.label}</div>
+                      <div className={`font-semibold text-lg ${item.color || "text-white"}`}>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Column 3 */}
+            <div className="flex flex-col gap-8">
+              <div className="bg-zinc-900 border border-purple-800 rounded-3xl p-8 shadow-xl hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl flex flex-col items-center">
+                <div className="flex flex-col items-center gap-3 mb-8 w-full">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center text-3xl">🌌</div>
+                  <h2 className="text-2xl font-semibold">Transit Chart</h2>
+                </div>
+                <div className="w-full max-w-[340px] aspect-square relative bg-zinc-950 border border-amber-500/30 rounded-3xl shadow-inner overflow-hidden">
+                  <svg viewBox="0 0 400 400" className="w-full h-full font-sans select-none">
+                    <line x1="0" y1="0" x2="400" y2="400" stroke="#ca8a04" strokeWidth="3" strokeOpacity="0.5"/>
+                    <line x1="400" y1="0" x2="0" y2="400" stroke="#ca8a04" strokeWidth="3" strokeOpacity="0.5"/>
+                    <polygon points="200,0 400,200 200,400 0,200" fill="none" stroke="#eab308" strokeWidth="4"/>
+                    
+                    {Array.from({ length: 12 }, (_, i) => {
+                      const h = i + 1;
+                      const signIdx = (Math.floor(ascendant / 30) + i) % 12;
+                      const occupants = signMap[signIdx] || [];
+                      const pos = getHousePos(h);
+                      if (!pos) return null;
+                      return (
+                        <g key={h}>
+                          <text x={pos.sx} y={pos.sy} fontSize="15" fill="#facc15" textAnchor="middle" dominantBaseline="middle" fontWeight="600">
+                            {signIdx + 1}
+                          </text>
+                          {occupants.length > 0 && (
+                            <text x={pos.cx} y={pos.cy} fontSize={occupants.length > 3 ? "13" : "16"} fill="#fefce8" textAnchor="middle" dominantBaseline="middle" fontWeight="700">
+                              {occupants.join(", ")}
+                            </text>
+                          )}
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+              </div>
+
+              <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 shadow-xl hover:border-zinc-400/50 transition-all duration-300 hover:shadow-2xl h-full">
+                <div className="flex flex-col items-center gap-3 mb-8 w-full">
+                  <div className="w-14 h-14 bg-gradient-to-br from-zinc-400 to-slate-500 rounded-2xl flex items-center justify-center text-3xl">🪐</div>
+                  <h2 className="text-2xl font-semibold">Planetary Positions</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-zinc-400 border-b border-zinc-800">
+                        <th className="pb-4 text-left pl-2">Planet</th>
+                        <th className="pb-4 text-center">Sign</th>
+                        <th className="pb-4 text-right pr-2">Degree</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800">
+                      {planetsData.map((p) => {
                         const deg = typeof p.deg === 'number' && !isNaN(p.deg) ? p.deg : 0;
                         const normalizedDeg = ((deg % 360) + 360) % 360;
                         const safeSignIndex = Math.max(0, Math.min(11, Math.floor(normalizedDeg / 30)));
-                        return (<tr key={p.name} className="border-b border-gray-100 last:border-0 hover:bg-[#DEB887]/10 transition-colors"><td className="py-2 font-bold text-[#8B4513]">{p.name}</td><td className="py-2 text-gray-700 font-medium">{SIGNS[safeSignIndex]}</td><td className="py-2 text-gray-700 tabular-nums">{formatDeg(normalizedDeg)}</td></tr>)
-                      })}</tbody>
-                    </table>
-                  </div>
+                        return (
+                          <tr key={p.name} className="hover:bg-zinc-800/70 transition-colors">
+                            <td className="py-4 pl-2 font-semibold text-white">{p.name}</td>
+                            <td className="py-4 text-center text-zinc-300">{SIGNS[safeSignIndex]}</td>
+                            <td className="py-4 text-right pr-2 text-zinc-300 tabular-nums font-mono">{formatDeg(normalizedDeg)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-
             </div>
-          </details>
+          </div>
         </div>
       </div>
       
