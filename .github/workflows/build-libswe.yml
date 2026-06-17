@@ -3,50 +3,40 @@ name: Build and Inject Swiss Ephemeris for Vercel
 on:
   workflow_dispatch: # Allows you to trigger this manually via GitHub website
 
+env:
+  # Silences the Node 20 deprecation warning by allowing the runner fallback
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     
-    # Grants the runner write permissions to push the file back to your repo
     permissions:
       contents: write
 
-    # Run the entire job inside Amazon Linux 2023 to perfectly match Vercel's GLIBC baseline
-    container:
-      image: amazonlinux:2023
-
     steps:
-      # 1. Install git and compilation tools directly inside the container environment
-      - name: Install Dependencies
-        run: |
-          dnf -y update
-          dnf -y groupinstall "Development Tools"
-          dnf -y install wget tar gzip git
-
-      # 2. Checkout your code using the official checkout utility
+      # 1. Checkout using the native host runner (prevents authentication/git exit code 2 errors)
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 3. Download the C source and compile the library 
-      - name: Compile Swiss Ephemeris
+      # 2. Compile inside Amazon Linux 2023 via simple Docker command rather than a broken wrapper
+      - name: Compile Swiss Ephemeris inside AL2023
         run: |
-          wget https://github.com -O /tmp/swe.tar.gz
-          tar -xzf /tmp/swe.tar.gz -C /tmp
-          cd /tmp/swisseph-2.10.03
-          
-          # Compile the shared object target binary
-          make -f Makefile.linux
-          
-          # Force copy into your exact web app folder structure
-          mkdir -p apps/web/bin
-          cp libswe.so apps/web/bin/libswe.so
+          docker run --rm -v ${{ github.workspace }}:/workspace amazonlinux:2023 /bin/bash -c "
+            dnf -y update && \
+            dnf -y groupinstall \"Development Tools\" && \
+            dnf -y install wget tar gzip && \
+            wget https://github.com -O /tmp/swe.tar.gz && \
+            tar -xzf /tmp/swe.tar.gz -C /tmp && \
+            cd /tmp/swisseph-2.10.03 && \
+            make -f Makefile.linux && \
+            mkdir -p /workspace/apps/web/bin && \
+            cp libswe.so /workspace/apps/web/bin/libswe.so
+          "
 
-      # 4. Automatically commit and push the working binary back to your repository
+      # 3. Commit and push the file cleanly back using the host runner
       - name: Commit and Push Changes
         run: |
-          # Safe directory marker needed for Git inside a container environment
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
           git add apps/web/bin/libswe.so
