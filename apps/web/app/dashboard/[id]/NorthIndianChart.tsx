@@ -38,18 +38,18 @@ export function NorthIndianChart({ planets, ascLon, title = "D1 Lagna Chart" }: 
   // Re-calibrated coordinates optimized for clean readability next to thicker lines
   const getHousePos = (h: number) => {
     const positions = [
-      { cx: 200, cy: 95,  sx: 200, sy: 162 }, // 1 (Lagna)
-      { cx: 105, cy: 45,  sx: 145, sy: 80 },  // 2
-      { cx: 45,  cy: 105, sx: 85,  sy: 145 }, // 3
-      { cx: 110, cy: 200, sx: 165, sy: 200 }, // 4
-      { cx: 45,  cy: 295, sx: 85,  sy: 255 }, // 5
-      { cx: 105, cy: 355, sx: 145, sy: 320 }, // 6
-      { cx: 200, cy: 305, sx: 200, sy: 238 }, // 7
-      { cx: 295, cy: 355, sx: 255, sy: 320 }, // 8
-      { cx: 355, cy: 295, sx: 315, sy: 255 }, // 9
-      { cx: 290, cy: 200, sx: 235, sy: 200 }, // 10
-      { cx: 355, cy: 105, sx: 315, sy: 145 }, // 11
-      { cx: 295, cy: 45,  sx: 255, sy: 80 }   // 12
+      { cx: 200, cy: 95,  sx: 200, sy: 160 }, // 1 (Lagna)
+      { cx: 105, cy: 45,  sx: 120, sy: 85 },  // 2
+      { cx: 45,  cy: 105, sx: 85,  sy: 120 }, // 3
+      { cx: 110, cy: 200, sx: 160, sy: 200 }, // 4
+      { cx: 45,  cy: 295, sx: 85,  sy: 280 }, // 5
+      { cx: 105, cy: 355, sx: 120, sy: 315 }, // 6
+      { cx: 200, cy: 305, sx: 200, sy: 240 }, // 7
+      { cx: 295, cy: 355, sx: 280, sy: 315 }, // 8
+      { cx: 355, cy: 295, sx: 315, sy: 280 }, // 9
+      { cx: 290, cy: 200, sx: 240, sy: 200 }, // 10
+      { cx: 355, cy: 105, sx: 315, sy: 120 }, // 11
+      { cx: 295, cy: 45,  sx: 280, sy: 85 }   // 12
     ];
     return positions[h - 1];
   };

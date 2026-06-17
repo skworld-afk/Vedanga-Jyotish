@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
 import InteractiveChartCard from "./InteractiveChartCard";
 import { Vimshottari } from "./Vimshottari";
+import Link from "next/link";
 
 import {
   buildCompleteDashboard,
@@ -90,6 +91,13 @@ export default async function DashboardPage({
           </h2>
         </div>
       </div>
+
+      <Link
+        href={`/chart/edit/${profile.id}`}
+        className="text-xs font-semibold tracking-widest uppercase bg-slate-900/30 text-slate-300 border border-slate-700/80 hover:bg-slate-800 hover:text-slate-100 transition-colors px-4 py-2"
+      >
+        Edit Details
+      </Link>
     </div>
 
     {/* Modernized 2-Row Component Registry Grid */}
@@ -115,7 +123,7 @@ export default async function DashboardPage({
         <div className="group flex flex-col bg-slate-900/30 border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300 p-4 shadow-sm relative overflow-hidden rounded-none">
           <div className="absolute top-0 left-0 w-full h-[1px] bg-indigo-500/30 opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mb-1.5">Birth Date</span>
-          <span className="text-base font-medium text-slate-200 tracking-tight font-mono truncate rounded-none">{profile.birthDate?.toLocaleDateString() || "—"}</span>
+          <span className="text-base font-medium text-slate-200 tracking-tight font-mono truncate rounded-none">{profile.birthDate?.toLocaleDateString('en-GB') || "—"}</span>
         </div>
 
         {/* Birth Time Item */}
