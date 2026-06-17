@@ -2,13 +2,13 @@
   "name": "astro-saas",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-	"build": "turbo run build",
-  "vercel-build": "pnpm prisma generate --schema=packages/db/prisma/schema.prisma && turbo run build"
+    "vercel-build": "pnpm prisma generate --schema=packages/db/prisma/schema.prisma && turbo run build"
   },
   "devDependencies": {
     "dotenv": "^17.4.2",
