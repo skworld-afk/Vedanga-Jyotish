@@ -1,0 +1,45 @@
+name: Build and Inject Swiss Ephemeris for Vercel
+
+on:
+  workflow_dispatch: # Allows you to trigger this manually via GitHub website
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout your code into the runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Run compilation inside Amazon Linux 2023 container to match Vercel GLIBC
+      - name: Compile Library in AL2023
+        uses: addnab/docker-run-action@v3
+        with:
+          image: amazonlinux:2023
+          options: -v ${{ github.workspace }}:/workspace
+          run: |
+            dnf -y update
+            dnf -y groupinstall "Development Tools"
+            dnf -y install wget tar gzip
+            
+            # Download Swiss Ephemeris Source
+            wget https://github.com -O /tmp/swe.tar.gz
+            tar -xzf /tmp/swe.tar.gz -C /tmp
+            cd /tmp/swisseph-2.10.03
+            
+            # Build the library
+            make -f Makefile.linux
+            
+            # Overwrite the broken libswe.so file inside your exact folder
+            mkdir -p /workspace/apps/web/bin
+            cp libswe.so /workspace/apps/web/bin/libswe.so
+
+      # 3. Automatically push the corrected binary back into your repo
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          git add apps/web/bin/libswe.so
+          git commit -m "fix: update libswe.so with Vercel compatible glibc binary" || echo "No changes to commit"
+          git push
