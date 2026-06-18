@@ -276,6 +276,7 @@ export interface FullDashboardData {
   charts: {
     D1: Record<string, number>;
     D9: Record<string, number>;
+    Chalit?: Record<string, number>;
     Moon: Record<string, number>;
     Sun: Record<string, number>;
     Transit: Record<string, number>;
@@ -388,18 +389,61 @@ export function calculateAshtakavarga(planets: Record<string, number>): Ashtakav
   };
 }
 
+function getTzOffsetHours(timezoneId: string, date: Date): number {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezoneId,
+      timeZoneName: 'longOffset'
+    }).formatToParts(date);
+    const tzPart = parts.find(p => p.type === 'timeZoneName')?.value;
+    if (tzPart && tzPart.startsWith('GMT')) {
+      const offsetStr = tzPart.slice(3);
+      if (!offsetStr) return 0;
+      const sign = offsetStr.startsWith('-') ? -1 : 1;
+      const [hours, minutes] = offsetStr.slice(1).split(':').map(Number);
+      return sign * ((hours || 0) + (minutes || 0) / 60);
+    }
+  } catch (e) {
+    // ignore invalid timezone
+  }
+  return NaN;
+}
+
 export async function buildCompleteDashboard(
   profile: any
 ): Promise<FullDashboardData> {
-  const bDate = new Date(profile.birthDate);
-  const bYear = bDate.getUTCFullYear();
-  const bMonth = bDate.getUTCMonth() + 1;
-  const bDay = bDate.getUTCDate();
-  const bHour = bDate.getUTCHours() + bDate.getUTCMinutes() / 60.0 + bDate.getUTCSeconds() / 3600.0;
-  const bJd = swe_julday(bYear, bMonth, bDay, bHour, 1) as number;
+  let trueBirthDate = new Date(profile.birthDate);
   
   const lat = Number(profile.latitude ?? 28.6139);
   const lon = Number(profile.longitude ?? 77.2090);
+
+  let bYear = trueBirthDate.getUTCFullYear();
+  let bMonth = trueBirthDate.getUTCMonth() + 1;
+  let bDay = trueBirthDate.getUTCDate();
+  let bHour = trueBirthDate.getUTCHours() + trueBirthDate.getUTCMinutes() / 60.0 + trueBirthDate.getUTCSeconds() / 3600.0;
+
+  if (profile.birthTime) {
+    const [h, m] = profile.birthTime.split(':').map(Number);
+    if (!isNaN(h) && !isNaN(m)) {
+      let tzOffsetHours = lon / 15;
+      if (profile.timezoneId) {
+        const offset = getTzOffsetHours(profile.timezoneId, trueBirthDate);
+        if (!isNaN(offset)) {
+          tzOffsetHours = offset;
+        }
+      }
+      const localDate = new Date(Date.UTC(bYear, bMonth - 1, bDay, h, m, 0));
+      const utcTime = localDate.getTime() - (tzOffsetHours * 3600000);
+      trueBirthDate = new Date(utcTime);
+      
+      bYear = trueBirthDate.getUTCFullYear();
+      bMonth = trueBirthDate.getUTCMonth() + 1;
+      bDay = trueBirthDate.getUTCDate();
+      bHour = trueBirthDate.getUTCHours() + trueBirthDate.getUTCMinutes() / 60.0 + trueBirthDate.getUTCSeconds() / 3600.0;
+    }
+  }
+
+  const bJd = swe_julday(bYear, bMonth, bDay, bHour, 1) as number;
 
   // =========================================================================
   // DYNAMIC CHART CALCULATION
@@ -407,13 +451,40 @@ export async function buildCompleteDashboard(
   // data matches the core swisseph engine instead of relying on stale db caches
   // =========================================================================
   const calculatedData = calculateChart(bJd, lat, lon);
-  const planets = calculatedData.planets;
-  const speeds = calculatedData.speeds;
-  const divisional = calculatedData.divisional;
+  
+  const planets: Record<string, number> = {};
+  Object.entries(calculatedData.planets || {}).forEach(([k, v]) => {
+    planets[k.toLowerCase()] = v;
+  });
 
-  const asc = planets.ascendant || 0;
+  const speeds: Record<string, number> = {};
+  Object.entries(calculatedData.speeds || {}).forEach(([k, v]) => {
+    speeds[k.toLowerCase()] = v;
+  });
+
+  const divisional: Record<string, Record<string, number>> = {};
+  Object.entries(calculatedData.divisional || {}).forEach(([divKey, divObj]) => {
+    const currentDiv: Record<string, number> = {};
+    divisional[divKey] = currentDiv;
+    Object.entries(divObj as Record<string, number>).forEach(([k, v]) => {
+      currentDiv[k.toLowerCase()] = v;
+    });
+  });
+
+  const asc = planets.ascendant || planets.asc || planets.lagna || 0;
+  planets.ascendant = asc; // ensure uniform key mapping
   const moonLon = planets.moon || 0;
   const sunLon = planets.sun || 0;
+
+  // Construct Bhava Chalit Chart mapping using exact house placement
+  const chalitPlanets: Record<string, number> = { ascendant: asc };
+  const ascSign = Math.floor(asc / 30);
+  Object.entries(planets).forEach(([p, lon]) => {
+    if (['ascendant', 'asc', 'lagna', 'mc', 'midheaven', 'ayanamsha'].includes(p.toLowerCase())) return;
+    const h = getHouse(asc, lon);
+    const targetSign = (ascSign + h - 1) % 12;
+    chalitPlanets[p] = targetSign * 30 + 15;
+  });
 
   const yogas = calculateYogas(asc, planets);
   const groupedYogas = yogas.reduce((acc, yoga) => {
@@ -432,7 +503,7 @@ export async function buildCompleteDashboard(
 
   const { sunrise, sunset } = getSunriseSunset(bJd, lat, lon);
   const { rise: moonrise, set: moonset } = getMoonriseMoonset(bJd, lat, lon);
-  const weekday = bDate.getDay();
+  const weekday = trueBirthDate.getDay();
   
   const muhurtas = (sunrise && sunset) ? calculateMuhurtas(sunrise, sunset, weekday) : null;
   const hora = (sunrise && sunset) ? calculateActiveHora(bJd, sunrise, sunset, weekday) : "Unknown";
@@ -440,7 +511,7 @@ export async function buildCompleteDashboard(
   const nakIndex = getNakshatra(moonLon);
 
   const fullPanchang = {
-    vara: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(bDate),
+    vara: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(trueBirthDate),
     tithi: basicPanchang.tithi,
     karana: basicPanchang.karana,
     yoga: basicPanchang.yoga,
@@ -459,17 +530,32 @@ export async function buildCompleteDashboard(
   // Dasha generation (5-level Parashara precise) and fetch running periods for today
   // Defaults to "solar", optionally controlled by user profile settings
   const dashaMode: DashaYearMode = profile?.settings?.dashaYearMode === "savana" ? "savana" : "solar";
-  const fullDashaTree = calculateVimshottariDasha(moonLon, bDate, dashaMode);
+  const fullDashaTree = calculateVimshottariDasha(moonLon, trueBirthDate, dashaMode);
   const activeDasha = getCurrentVimshottariDasha(fullDashaTree, new Date());
+
+  // Transit Chart Calculation
+  const now = new Date();
+  const nYear = now.getUTCFullYear();
+  const nMonth = now.getUTCMonth() + 1;
+  const nDay = now.getUTCDate();
+  const nHour = now.getUTCHours() + now.getUTCMinutes() / 60.0 + now.getUTCSeconds() / 3600.0;
+  const tJd = swe_julday(nYear, nMonth, nDay, nHour, 1) as number;
+  const transitData = calculateChart(tJd, lat, lon);
+  
+  const transitPlanets: Record<string, number> = {};
+  Object.entries(transitData.planets || {}).forEach(([k, v]) => {
+    transitPlanets[k.toLowerCase()] = v;
+  });
 
   return {
     overview: { native: profile, panchang: fullPanchang },
     charts: {
       D1: planets,
       D9: divisional.D9 || {},
+      Chalit: chalitPlanets,
       Moon: planets, // Will be rendered shifting Moon to Asc
       Sun: planets, // Will be rendered shifting Sun to Asc
-      Transit: {}, // TODO: Fetch current transit planets
+      Transit: transitPlanets,
     },
     planetary: getPlanetSummary(planets, speeds),
     bhavas: buildBhavaDetailsTable(asc, planets),

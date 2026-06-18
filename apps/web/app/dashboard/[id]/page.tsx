@@ -363,8 +363,8 @@ export default async function DashboardPage({
           <div className="absolute top-0 left-0 w-full h-[1px] bg-sky-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           <InteractiveChartCard 
             title="Bhava Chalit" 
-            planets={charts?.D1 || {}} 
-            ascLon={getPlanetLon(charts?.D1, ['ascendant', 'asc', 'lagna'])} 
+            planets={charts?.Chalit || charts?.D1 || {}} 
+            ascLon={getPlanetLon(charts?.Chalit || charts?.D1, ['ascendant', 'asc', 'lagna'])} 
           />
         </div>
 
@@ -374,7 +374,7 @@ export default async function DashboardPage({
           <InteractiveChartCard 
             title="Transit Chart" 
             planets={charts?.Transit && Object.keys(charts.Transit).length > 0 ? charts.Transit : charts?.D1 || {}} 
-            ascLon={getPlanetLon(charts?.D1, ['ascendant', 'asc', 'lagna'])} 
+            ascLon={getPlanetLon(charts?.Transit && Object.keys(charts.Transit).length > 0 ? charts.Transit : charts?.D1, ['ascendant', 'asc', 'lagna'])} 
           />
         </div>
 

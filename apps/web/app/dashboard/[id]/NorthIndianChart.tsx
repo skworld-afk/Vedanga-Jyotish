@@ -11,6 +11,7 @@ const PLANET_COLORS: Record<string, string> = {
   SA: "#818cf8", // Saturn: Indigo
   RA: "#10b981", // Rahu: Emerald Green
   KE: "#c084fc", // Ketu: Purple
+  Asc: "#ffffff", // Ascendant
 };
 
 // Distinct premium colors mapped to each of the 12 signs/digits to maximize structural division
@@ -24,14 +25,23 @@ export function NorthIndianChart({ planets, ascLon, title = "D1 Lagna Chart" }: 
   // Calculate Ascendant Sign (1-12)
   const ascSign = Math.floor(((ascLon % 360) + 360) % 360 / 30) + 1;
   
+  const lagnaEntry = Object.entries(planets).find(([p]) => ['ascendant', 'asc', 'lagna'].includes(p.toLowerCase()));
+  const lagnaLon = lagnaEntry ? (lagnaEntry[1] as number) : ascLon;
+
   // Map planets into the 12 houses relative to the Ascendant
   const houses = Array.from({length: 12}, (_, i) => {
     const sign = ((ascSign + i - 1) % 12) + 1;
     const occupants = Object.entries(planets).filter(([p, lon]) => {
-       if (['ascendant', 'asc', 'mc', 'midheaven', 'ayanamsha'].includes(p.toLowerCase())) return false;
+       if (['ascendant', 'asc', 'lagna', 'mc', 'midheaven', 'ayanamsha'].includes(p.toLowerCase())) return false;
        const pSign = Math.floor(((lon as number % 360) + 360) % 360 / 30) + 1;
        return pSign === sign;
     }).map(([p]) => p.substring(0, 2).toUpperCase());
+    
+    const lagnaSign = Math.floor(((lagnaLon % 360) + 360) % 360 / 30) + 1;
+    if (lagnaSign === sign) {
+      occupants.unshift("Asc");
+    }
+
     return { sign, occupants };
   });
 
