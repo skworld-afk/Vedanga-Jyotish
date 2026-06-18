@@ -45,7 +45,7 @@ export function Header() {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 shadow-inner">
             <Link href="/" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-sm font-bold uppercase tracking-widest text-white hover:bg-white/20 transition-colors">Home</Link>
             <Link href="/panchang" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-sm font-bold uppercase tracking-widest text-white hover:bg-white/20 transition-colors">Panchang</Link>
-            <Link href="/learn" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-sm font-bold uppercase tracking-widest text-white hover:bg-white/20 transition-colors">Learn Astrology</Link>
+            <Link href="/learn/astrology" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-sm font-bold uppercase tracking-widest text-white hover:bg-white/20 transition-colors">Learn Astrology</Link>
             <Link href="/about" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-sm font-bold uppercase tracking-widest text-white hover:bg-white/20 transition-colors">About</Link>
             <Link href="/chart/create" onClick={() => setIsMenuOpen(false)} className="block mt-1 px-3 py-2 rounded-md text-sm font-bold uppercase tracking-widest bg-white/10 text-white hover:bg-white/20 transition-colors">+ New Chart</Link>
           </div>
