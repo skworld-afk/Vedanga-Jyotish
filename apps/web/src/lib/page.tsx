@@ -8,8 +8,9 @@ interface ChartPageProps {
 }
 
 export default async function ChartVisualizationPage({ params }: ChartPageProps) {
+  const { profileId } = await params; // resolve params promise
   const profile = await prisma.profile.findUnique({
-    where: { id: params.profileId },
+    where: { id: profileId },
     include: { chart: true },
   });
 
@@ -21,9 +22,9 @@ export default async function ChartVisualizationPage({ params }: ChartPageProps)
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <header className="border-b pb-4">
-        <h1 className="text-3xl font-bold">{profile.name}'s Chart</h1>
+        <h1 className="text-3xl font-bold">{profile.displayName}'s Chart</h1>
         <p className="text-gray-500">
-          Born on {profile.birthDate.toLocaleDateString()} at {profile.localTime} in {profile.placeName}
+          Born on {profile.birthDate.toLocaleDateString()} at {profile.birthTime} in {profile.placeName}
         </p>
       </header>
 

@@ -3,6 +3,7 @@
 import { prisma } from "../../../src/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 
 import { geocodePlace } from "../../../src/lib/services/geocode";
@@ -21,6 +22,15 @@ const BirthChartSchema = z.object({
 
 export async function createBirthChart(formData: FormData) {
   try {
+    // Track the visitor
+    const headerList = await headers();
+    const ip = headerList.get('x-forwarded-for') || headerList.get('x-real-ip') || 'Unknown';
+    const userAgent = headerList.get('user-agent') || 'Unknown';
+
+    await prisma.visitor.create({
+      data: { ip, userAgent }
+    });
+
     const rawData = {
       displayName: String(formData.get("displayName") || ""),
       gender: String(formData.get("gender") || "MALE"),

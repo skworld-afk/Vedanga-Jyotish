@@ -22,10 +22,10 @@ export async function createProfile(formData: FormData) {
   // 1. Create the profile in the database
   const profile = await prisma.profile.create({
     data: {
-      name,
+      displayName: name,
       placeName,
       birthDate: dateObj,
-      localTime: dateObj.toLocaleTimeString(),
+      birthTime: dateObj.toLocaleTimeString(),
       // Defaulting coords for now - later we will hook up a Google Maps/Mapbox API
       latitude: 0,
       longitude: 0,
@@ -37,5 +37,5 @@ export async function createProfile(formData: FormData) {
   // 2. Later: Call your astro calculation API to generate the `Chart` and `DashaCache` here
 
   // 3. Redirect the user to the visualization page
-  redirect(`/dashboard/chart/${profile.id}`);
+  redirect(`/dashboard/${profile.id}`);
 }

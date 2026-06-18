@@ -138,9 +138,10 @@ export function ChartForm({
               type="date"
               name="birthDate"
               value={birthDate}
+              max={new Date().toISOString().split("T")[0]}
               onChange={(e) => setBirthDate(e.target.value)}
               required
-              className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50"
+              className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50 cursor-text"
             />
           </div>
 
@@ -155,7 +156,7 @@ export function ChartForm({
               value={birthTime}
               onChange={(e) => setBirthTime(e.target.value)}
               required
-              className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50"
+              className="block w-full bg-[#FDFBF7] border border-[#DEB887]/60 rounded-xl px-4 py-3 text-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#8B4513]/50 cursor-text"
             />
           </div>
 
