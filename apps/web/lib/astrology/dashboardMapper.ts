@@ -9,6 +9,7 @@ import {
 import { calculateVimshottariDasha, getCurrentVimshottariDasha, CurrentDasha, DashaPeriod, DashaYearMode } from "./dasha";
 import { swe_julday, swe_get_ayanamsa_ut, getSunriseSunset, getMoonriseMoonset, calculateMuhurtas, calculateActiveHora } from "./index";
 import { calculateChart } from "./chart";
+import { calculateAllDivisionalCharts } from "./divisional";
 
 const NAKSHATRA_LORDS = [
   "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury"
@@ -280,6 +281,7 @@ export interface FullDashboardData {
     Moon: Record<string, number>;
     Sun: Record<string, number>;
     Transit: Record<string, number>;
+    AllDivisional?: Record<string, Record<string, number>>;
   };
   planetary: PlanetDashboardData[];
   bhavas: BhavaDashboardData[];
@@ -462,8 +464,10 @@ export async function buildCompleteDashboard(
     speeds[k.toLowerCase()] = v;
   });
 
+  const allDivisional = calculateAllDivisionalCharts(planets);
+
   const divisional: Record<string, Record<string, number>> = {};
-  Object.entries(calculatedData.divisional || {}).forEach(([divKey, divObj]) => {
+  Object.entries(allDivisional || {}).forEach(([divKey, divObj]) => {
     const currentDiv: Record<string, number> = {};
     divisional[divKey] = currentDiv;
     Object.entries(divObj as Record<string, number>).forEach(([k, v]) => {
@@ -556,6 +560,7 @@ export async function buildCompleteDashboard(
       Moon: planets, // Will be rendered shifting Moon to Asc
       Sun: planets, // Will be rendered shifting Sun to Asc
       Transit: transitPlanets,
+      AllDivisional: divisional,
     },
     planetary: getPlanetSummary(planets, speeds),
     bhavas: buildBhavaDetailsTable(asc, planets),

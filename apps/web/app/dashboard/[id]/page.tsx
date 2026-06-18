@@ -302,8 +302,8 @@ export default async function DashboardPage({
 </section>
 
       {/* Section C — Main Charts (3 Columns x 2 Rows) */}
-      {/* Divisional Charts */}
-<section id="divisional" className="relative overflow-hidden border border-slate-800 bg-slate-950 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.7)] rounded-none">
+      {/* Birth Charts */}
+<section id="charts" className="relative overflow-hidden border border-slate-800 bg-slate-950 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.7)] rounded-none">
   {/* High-End Cosmic Sky-Blue Ambient Glows */}
   <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-sky-500/5 blur-[120px] pointer-events-none" />
   <div className="absolute left-0 bottom-0 h-96 w-96 rounded-full bg-blue-500/5 blur-[120px] pointer-events-none" />
@@ -318,10 +318,16 @@ export default async function DashboardPage({
         <div>
           
           <h2 className="text-2xl font-light tracking-tight text-slate-100 ">
-            Divisional <span className="font-semibold text-sky-400">Charts</span>
+            Birth <span className="font-semibold text-sky-400">Charts</span>
           </h2>
         </div>
       </div>
+      <Link
+        href={`/dashboard/${profile.id}/divisional`}
+        className="text-xs font-semibold tracking-widest uppercase bg-sky-900/30 text-sky-300 border border-sky-700/80 hover:bg-sky-800 hover:text-sky-100 transition-colors px-4 py-2"
+      >
+        Show All Divisional Charts
+      </Link>
     </div>
 
     {/* Elegant Harmonic Card Interface Grid */}
