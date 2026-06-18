@@ -1,6 +1,6 @@
 import { getAscendantDegree, getPlanetData } from "./swisseph";
 import { SE_SUN, SE_MOON, SE_MERCURY, SE_VENUS, SE_MARS, SE_JUPITER, SE_SATURN, SE_TRUE_NODE } from "./constants";
-import { calculateD9Longitude } from "./divisional";
+import { getDivisionalLongitude } from "./divisional";
 
 export function calculateChart(julianDay: number, latitude: number, longitude: number) {
   const ascendant = getAscendantDegree(julianDay, latitude, longitude);
@@ -41,16 +41,16 @@ export function calculateChart(julianDay: number, latitude: number, longitude: n
 
   const divisional = {
     D9: {
-      ascendant: calculateD9Longitude(planets.ascendant),
-      sun: calculateD9Longitude(planets.sun),
-      moon: calculateD9Longitude(planets.moon),
-      mercury: calculateD9Longitude(planets.mercury),
-      venus: calculateD9Longitude(planets.venus),
-      mars: calculateD9Longitude(planets.mars),
-      jupiter: calculateD9Longitude(planets.jupiter),
-      saturn: calculateD9Longitude(planets.saturn),
-      rahu: calculateD9Longitude(planets.rahu),
-      ketu: calculateD9Longitude(planets.ketu),
+      ascendant: getDivisionalLongitude(planets.ascendant, 9),
+      sun: getDivisionalLongitude(planets.sun, 9),
+      moon: getDivisionalLongitude(planets.moon, 9),
+      mercury: getDivisionalLongitude(planets.mercury, 9),
+      venus: getDivisionalLongitude(planets.venus, 9),
+      mars: getDivisionalLongitude(planets.mars, 9),
+      jupiter: getDivisionalLongitude(planets.jupiter, 9),
+      saturn: getDivisionalLongitude(planets.saturn, 9),
+      rahu: getDivisionalLongitude(planets.rahu, 9),
+      ketu: getDivisionalLongitude(planets.ketu, 9),
     }
   };
 
