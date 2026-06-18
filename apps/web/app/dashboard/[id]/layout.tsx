@@ -1,5 +1,7 @@
 import React, { use } from "react";
 import Link from "next/link";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 
 export default function DashboardLayout({
   children,
@@ -38,14 +40,28 @@ export default function DashboardLayout({
       )
     },
     { 
-      name: "Divisional charts", 
-      href: `/dashboard/${id}#divisional`,
+      name: "Birth charts", 
+      href: `/dashboard/${id}#charts`,
       activeColor: "text-sky-400 group-hover:drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]",
       borderColor: "group-hover:border-sky-500/40",
       icon: (
         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <rect x="3" y="3" width="18" height="18" strokeWidth={1.5} />
           <path d="M3 3l18 18M21 3L3 21M3 12h18M12 3v18" strokeWidth={1} opacity="0.4" />
+        </svg>
+      )
+    },
+    { 
+      name: "Divisional charts", 
+      href: `/dashboard/${id}/divisional`,
+      activeColor: "text-violet-400 group-hover:drop-shadow-[0_0_8px_rgba(167,139,250,0.6)]",
+      borderColor: "group-hover:border-violet-500/40",
+      icon: (
+        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" strokeWidth="1.5" />
+          <rect x="14" y="3" width="7" height="7" strokeWidth="1.5" />
+          <rect x="14" y="14" width="7" height="7" strokeWidth="1.5" />
+          <rect x="3" y="14" width="7" height="7" strokeWidth="1.5" />
         </svg>
       )
     },
@@ -139,77 +155,85 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="flex h-screen bg-slate-950 font-mono text-slate-300 rounded-none antialiased selection:bg-indigo-500/30 selection:text-white">
-      {/* Sidebar - Sharp Interface Module */}
-      <aside className="w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col shadow-2xl hidden md:flex rounded-none relative z-30">
-        {/* Sidebar Header Brand Strip */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-800/80 bg-slate-900/20 rounded-none">
-          <div className="flex items-center gap-3.5">
-            <div className="w-8 h-8 bg-slate-900 border border-slate-800 flex items-center justify-center text-indigo-400 font-black text-base shadow-inner rounded-none">
-              ω
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-slate-100 tracking-widest leading-none">
-                Vedanga Jyotish
-              </h1>
-              <p className="text-[9px] text-slate-500 font-bold tracking-[0.2em] mt-1">
-                vedic platform engine
-              </p>
+    <div className="flex flex-col h-screen overflow-hidden">
+      <Header />
+      <div className="flex flex-1 bg-slate-950 font-mono text-slate-300 rounded-none antialiased selection:bg-indigo-500/30 selection:text-white overflow-hidden">
+        {/* Sidebar - Sharp Interface Module */}
+        <aside className="w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col shadow-2xl hidden md:flex rounded-none relative z-30">
+          {/* Sidebar Header Brand Strip */}
+          <div className="h-16 flex items-center px-6 border-b border-slate-800/80 bg-slate-900/20 rounded-none">
+            <div className="flex items-center gap-3.5">
+              <div className="w-8 h-8 bg-slate-900 border border-slate-800 flex items-center justify-center text-indigo-400 font-black text-base shadow-inner rounded-none">
+                ω
+              </div>
+              <div>
+                <h1 className="text-sm font-bold text-slate-100 tracking-widest leading-none">
+                  Vedanga Jyotish
+                </h1>
+                <p className="text-[9px] text-slate-500 font-bold tracking-[0.2em] mt-1">
+                  vedic platform engine
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Tactical Navigation Deck */}
-        <nav className="flex-1 overflow-y-auto p-4 py-6 space-y-2 rounded-none custom-scrollbar">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-4 px-4 py-3.5 border border-transparent text-slate-400 hover:text-slate-100 hover:bg-slate-900/40 ${item.borderColor} transition-all duration-300 group rounded-none relative`}
-            >
-              {/* Sidebar left active line */}
-              <div className="absolute left-0 top-1/4 w-[2px] h-1/2 bg-slate-800 group-hover:bg-current transition-colors" />
-              
-              {/* Highly Colorful Vector Icon Matrix */}
-              <span className={`transition-all duration-300 ${item.activeColor}`}>
-                {item.icon}
+          {/* Tactical Navigation Deck */}
+          <nav className="flex-1 overflow-y-auto p-4 py-6 space-y-2 rounded-none custom-scrollbar">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-4 px-4 py-3.5 border border-transparent text-slate-400 hover:text-slate-100 hover:bg-slate-900/40 ${item.borderColor} transition-all duration-300 group rounded-none relative`}
+              >
+                {/* Sidebar left active line */}
+                <div className="absolute left-0 top-1/4 w-[2px] h-1/2 bg-slate-800 group-hover:bg-current transition-colors" />
+                
+                {/* Highly Colorful Vector Icon Matrix */}
+                <span className={`transition-all duration-300 ${item.activeColor}`}>
+                  {item.icon}
+                </span>
+                <span className="text-xs font-bold tracking-wider">{item.name}</span>
+              </Link>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content Processing Core */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden relative rounded-none">
+          
+          {/* Top Instrumentation Header */}
+          <header className="h-16 bg-slate-950/40 backdrop-blur-md border-b border-slate-800/80 px-6 md:px-8 flex items-center justify-between sticky top-0 z-20 rounded-none">
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 bg-emerald-500 rounded-none animate-pulse" />
+              <span className="text-[20px] font-bold text-slate-500 tracking-widest">
+                Dashboard
               </span>
-              <span className="text-xs font-bold tracking-wider">{item.name}</span>
-            </Link>
-          ))}
-        </nav>
-      </aside>
+            </div>
 
-      {/* Main Content Processing Core */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative rounded-none">
-        
-        {/* Top Instrumentation Header */}
-        <header className="h-16 bg-slate-950/40 backdrop-blur-md border-b border-slate-800/80 px-6 md:px-8 flex items-center justify-between sticky top-0 z-20 rounded-none">
-          <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 bg-emerald-500 rounded-none animate-pulse" />
-            <span className="text-[20px] font-bold text-slate-500 tracking-widest">
-              Dashboard
-            </span>
-          </div>
+            <div className="flex items-center gap-4">
+              <div className="h-8 w-8 bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-xs text-indigo-400 tracking-tight hover:border-indigo-500/40 hover:text-white transition-all duration-200 cursor-pointer rounded-none shadow-inner">
+                 
+              </div>
+            </div>
+          </header>
 
-          <div className="flex items-center gap-4">
-            <div className="h-8 w-8 bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-xs text-indigo-400 tracking-tight hover:border-indigo-500/40 hover:text-white transition-all duration-200 cursor-pointer rounded-none shadow-inner">
-               
+          {/* Main Viewport Stage - Space Expansion applied via padding gaps */}
+          <div 
+            className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-10 scroll-smooth rounded-none" 
+            style={{ scrollPaddingTop: "6rem", scrollbarWidth: 'thin', scrollbarColor: 'rgba(51, 65, 85, 0.5) transparent' }}
+          >
+            {/* Section Gap Spacing Configuration */}
+            <div className="max-w-7xl mx-auto space-y-12 rounded-none pb-12 min-h-full">
+              {children}
+            </div>
+            
+            {/* Base Footer Module injected inside Main Viewport Stage */}
+            <div className="mt-auto">
+              <Footer />
             </div>
           </div>
-        </header>
-
-        {/* Main Viewport Stage - Space Expansion applied via padding gaps */}
-        <div 
-          className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-10 scroll-smooth rounded-none" 
-          style={{ scrollPaddingTop: "6rem", scrollbarWidth: 'thin', scrollbarColor: 'rgba(51, 65, 85, 0.5) transparent' }}
-        >
-          {/* Section Gap Spacing Configuration */}
-          <div className="max-w-7xl mx-auto space-y-12 rounded-none pb-12">
-            {children}
-          </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

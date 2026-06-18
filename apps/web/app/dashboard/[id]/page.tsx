@@ -26,7 +26,7 @@ const BHAVA_NAMES = [
 const getPlanetLon = (chart: Record<string, number> | undefined, names: string[]) => {
   if (!chart) return 0;
   const key = Object.keys(chart).find(k => names.includes(k.toLowerCase()));
-  return key !== undefined ? chart[key] : 0;
+  return key !== undefined ? (chart[key] ?? 0) : 0;
 };
 
 export default async function DashboardPage({
@@ -444,6 +444,26 @@ export default async function DashboardPage({
             </tr>
           </thead>
           <tbody className="text-slate-300 text-sm">
+            {/* Ascendant Row */}
+            <tr className="border-b border-slate-900 bg-slate-950/40 hover:bg-slate-900/30 transition-all duration-200 group rounded-none">
+              <td className="py-4 px-5 font-semibold capitalize flex items-center gap-2.5 rounded-none relative">
+                <div className="absolute left-0 w-[2px] h-3/5 top-1/5 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="w-1.5 h-1.5 rounded-none bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]"></span>
+                <span className="tracking-tight text-slate-100">Ascendant</span>
+              </td>
+              <td className="py-4 px-5 text-orange-300 font-medium tracking-wide rounded-none">{bhavas[0]?.sign || "—"}</td>
+              <td className="py-4 px-5 font-mono text-[13px] text-cyan-400 font-semibold rounded-none">{(getPlanetLon(charts?.D1, ['ascendant', 'asc', 'lagna']) % 30).toFixed(2)}°</td>
+              <td className="py-4 px-5 font-mono text-[13px] text-yellow-400 font-bold rounded-none">1</td>
+              <td className="py-4 px-5 text-slate-300 rounded-none">
+                <span className="text-slate-500">—</span>
+              </td>
+              <td className="py-4 px-5 font-mono text-[13px] text-slate-500 rounded-none">—</td>
+              <td className="py-4 px-5 rounded-none">
+                <span className="px-2.5 py-1 text-[9px] uppercase tracking-wider font-bold rounded-none bg-slate-900 border border-slate-800 text-slate-400">
+                  Lagna
+                </span>
+              </td>
+            </tr>
             {planetary.map((p, i) => {
               const planetColors: Record<string, string> = {
                 sun: "text-amber-400",
