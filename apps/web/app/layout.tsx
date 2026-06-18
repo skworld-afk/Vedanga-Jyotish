@@ -13,7 +13,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Jyotish App",
-  description: "Coded by Sk",
+  description: "Developed by Sk",
 };
 
 export default function RootLayout({
